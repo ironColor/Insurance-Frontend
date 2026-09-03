@@ -1,0 +1,59 @@
+.page {
+  min-height: 100vh;
+  padding: 48px 32px;
+  background: linear-gradient(180deg, #edf5ff 0%, #f5f7fa 48%, #f5f7fa 100%);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  padding: 64px 40px;
+  border-radius: 28px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1467e8 0%, #0a9bb5 100%);
+  box-shadow: 0 20px 50px rgba(20, 103, 232, 0.18);
+}
+
+.eyebrow {
+  margin-bottom: 24px;
+  font-size: 22px;
+  letter-spacing: 4px;
+  opacity: 0.78;
+}
+
+.title {
+  font-size: 54px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.description {
+  margin-top: 20px;
+  font-size: 26px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 32px;
+  padding: 36px;
+  border: 1px solid rgba(23, 35, 61, 0.06);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 12px 36px rgba(23, 35, 61, 0.06);
+}
+
+.card-title {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.card-description {
+  margin-top: 14px;
+  color: #697386;
+  font-size: 26px;
+  line-height: 1.6;
+}
+
