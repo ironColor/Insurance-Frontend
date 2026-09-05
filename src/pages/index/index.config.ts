@@ -1,4 +1,6 @@
 export default definePageConfig({
-  navigationBarTitleText: '首页'
+  navigationStyle: 'custom',
+  navigationBarTitleText: '学生保险保障',
+  backgroundColor: '#e9f9ff',
+  backgroundTextStyle: 'dark'
 })
-

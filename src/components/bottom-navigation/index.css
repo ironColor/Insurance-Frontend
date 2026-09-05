@@ -1,0 +1,91 @@
+.bottom-navigation {
+  position: fixed;
+  z-index: 60;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  height: calc(104px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid rgba(34, 65, 104, 0.08);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -10px 30px rgba(35, 75, 118, 0.04);
+}
+
+.navigation-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  color: #a9b3c2;
+  flex-direction: column;
+}
+
+.navigation-label {
+  margin-top: 7px;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.navigation-item-active {
+  color: #3184e9;
+}
+
+.home-navigation-icon,
+.mine-navigation-icon {
+  position: relative;
+  width: 39px;
+  height: 38px;
+}
+
+.home-navigation-roof {
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 25px;
+  height: 25px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+.home-navigation-body {
+  position: absolute;
+  right: 5px;
+  bottom: 1px;
+  left: 5px;
+  height: 24px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.home-navigation-body::after {
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 5px 5px 0 0;
+  background: #ffffff;
+  content: '';
+}
+
+.mine-navigation-head {
+  position: absolute;
+  top: 2px;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mine-navigation-body {
+  position: absolute;
+  bottom: 1px;
+  left: 4px;
+  width: 32px;
+  height: 17px;
+  border-radius: 18px 18px 5px 5px;
+  background: currentColor;
+}
+

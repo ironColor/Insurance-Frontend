@@ -1,5 +1,11 @@
 export default defineAppConfig({
-  pages: ['pages/index/index'],
+  pages: [
+    'pages/login/index',
+    'pages/home/index',
+    'pages/mine/index',
+    'pages/index/index',
+    'pages/plan/index'
+  ],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
@@ -7,4 +13,3 @@ export default defineAppConfig({
     navigationBarTextStyle: 'black'
   }
 })
-

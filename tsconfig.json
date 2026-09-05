@@ -14,8 +14,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "types": ["@tarojs/taro", "@tarojs/components", "node"]
+    "types": ["@tarojs/taro", "@tarojs/components", "node", "vite/client"]
   },
   "include": ["config", "src", "types"]
 }
-
