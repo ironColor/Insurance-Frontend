@@ -4,8 +4,8 @@
   overflow: hidden;
   color: #111a2d;
   background:
-    radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.98) 0, rgba(255, 255, 255, 0) 36%),
-    #f6f7f8;
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.72) 0, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, #dcecff 0%, #e7f2ff 52%, #edf5ff 100%);
 }
 
 .login-safe-area {
@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  padding: 48px 56px 0;
+  padding: 62px 62px 0;
 }
 
 .brand-block {
@@ -42,7 +42,7 @@
 
 .brand-name {
   margin-top: 12px;
-  color: #0c1427;
+  color: #172039;
   font-size: 40px;
   font-weight: 700;
   line-height: 1.4;
@@ -55,13 +55,13 @@
   justify-content: center;
   width: 100%;
   height: 92px;
-  margin-top: 108px;
+  margin-top: 106px;
   padding: 0 40px;
   border: 0;
   border-radius: 999px;
   color: #ffffff;
-  background: #07c160;
-  box-shadow: 0 14px 30px rgba(7, 193, 96, 0.23);
+  background: #52bea1;
+  box-shadow: 0 14px 30px rgba(49, 166, 137, 0.18);
   font-size: 29px;
   font-weight: 600;
   line-height: 92px;
@@ -72,8 +72,8 @@
 }
 
 .wechat-login-button-hover {
-  background: #06ad56;
-  box-shadow: 0 10px 22px rgba(7, 193, 96, 0.2);
+  background: #43ac90;
+  box-shadow: 0 10px 22px rgba(49, 166, 137, 0.18);
   transform: translateY(2px);
 }
 
@@ -83,7 +83,7 @@
 
 .wechat-login-button[disabled] {
   color: #ffffff;
-  background: #07c160;
+  background: #52bea1;
 }
 
 .wechat-login-text {
@@ -132,7 +132,7 @@
   bottom: 0;
   width: 25px;
   height: 20px;
-  border: 2px solid #07c160;
+  border: 2px solid #52bea1;
   border-radius: 50%;
 }
 
@@ -150,7 +150,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: #07c160;
+  background: #52bea1;
 }
 
 .wechat-bubble-small .wechat-eye {
@@ -167,7 +167,7 @@
 
 .login-tip {
   margin-top: 28px;
-  color: #9ba1ad;
+  color: #91a0b5;
   font-size: 22px;
   line-height: 1.5;
   text-align: center;

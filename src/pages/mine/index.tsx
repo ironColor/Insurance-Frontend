@@ -1,9 +1,10 @@
 import { Button, Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import BottomNavigation from '../../components/bottom-navigation'
-import LocationHeader from '../../components/location-header'
+import { getHeaderLayout } from '../../components/location-header'
+import { clearAuthSession, hasAuthSession } from '../../services/session'
 
 import './index.css'
 
@@ -15,6 +16,13 @@ const showDeveloping = (title: string) => {
 
 export default function MinePage() {
   const [avatarUrl, setAvatarUrl] = useState(() => Taro.getStorageSync<string>(AVATAR_STORAGE_KEY))
+  const [headerLayout] = useState(getHeaderLayout)
+
+  useEffect(() => {
+    if (!hasAuthSession()) {
+      Taro.reLaunch({ url: '/pages/login/index' })
+    }
+  }, [])
 
   const changeAvatar = (event: { detail: { avatarUrl?: string } }) => {
     const nextAvatar = event.detail.avatarUrl
@@ -34,20 +42,34 @@ export default function MinePage() {
     })
   }
 
+  const logout = async () => {
+    const result = await Taro.showModal({
+      title: '提示',
+      content: '确定退出登录？',
+      cancelText: '取消',
+      confirmText: '确定',
+      confirmColor: '#2f80ed'
+    })
+
+    if (!result.confirm) return
+
+    clearAuthSession()
+    Taro.removeStorageSync(AVATAR_STORAGE_KEY)
+    Taro.reLaunch({ url: '/pages/login/index' })
+  }
+
   return (
     <View className='mine-page'>
-      <LocationHeader />
-
-      <View className='profile-hero'>
+      <View
+        className='profile-hero'
+        style={{ paddingTop: `${headerLayout.statusBarHeight + headerLayout.navigationHeight}px` }}
+      >
         <View className='profile-avatar'>
           {avatarUrl ? <Image className='profile-avatar-image' src={avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
         </View>
         <View className='profile-copy'>
           <Text className='profile-phone'>166****0523</Text>
           <Button className='change-avatar-button' openType='chooseAvatar' onChooseAvatar={changeAvatar}>修改头像</Button>
-        </View>
-        <View className='settings-icon' onClick={() => showDeveloping('设置')}>
-          <View className='settings-core' />
         </View>
       </View>
 
@@ -88,10 +110,13 @@ export default function MinePage() {
             <Text className='mine-menu-arrow'>›</Text>
           </View>
         </View>
+
+        <Button className='logout-button' hoverClass='logout-button-hover' onClick={logout}>
+          退出登录
+        </Button>
       </View>
 
       <BottomNavigation active='mine' />
     </View>
   )
 }
-

@@ -7,7 +7,7 @@ import './index.css'
 const REGION_STORAGE_KEY = 'insurance-selected-region'
 const DEFAULT_REGION = ['河北省', '保定市', '竞秀区']
 
-type HeaderLayout = {
+export type HeaderLayout = {
   statusBarHeight: number
   navigationHeight: number
   rightPadding: number
@@ -24,7 +24,7 @@ function getInitialRegion(): string[] {
   return Array.isArray(savedRegion) && savedRegion.length === 3 ? savedRegion : DEFAULT_REGION
 }
 
-function getHeaderLayout(): HeaderLayout {
+export function getHeaderLayout(): HeaderLayout {
   try {
     const windowInfo = Taro.getWindowInfo()
     const menuButton = Taro.getMenuButtonBoundingClientRect()

@@ -1,15 +1,22 @@
 import { Button, Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import brandMarks from '../../assets/images/brand-marks.png'
 import { requestWechatAuthorization } from '../../services/auth'
+import { hasAuthSession, saveAuthSession } from '../../services/session'
 
 import './index.css'
 
 export default function LoginPage() {
   const [authorizationVisible, setAuthorizationVisible] = useState(false)
   const [loggingIn, setLoggingIn] = useState(false)
+
+  useEffect(() => {
+    if (hasAuthSession()) {
+      Taro.reLaunch({ url: '/pages/home/index' })
+    }
+  }, [])
 
   const showAuthorization = () => {
     if (!loggingIn) setAuthorizationVisible(true)
@@ -59,6 +66,7 @@ export default function LoginPage() {
       await requestWechatAuthorization({ code, encryptedData, iv })
 
       // 接入后端登录接口时，在 auth service 中用登录 code 和手机号 code 换取业务 token。
+      saveAuthSession()
 
       await Taro.showToast({
         title: '微信授权成功',

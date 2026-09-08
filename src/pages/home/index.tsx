@@ -1,9 +1,11 @@
 import { Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import { useEffect } from 'react'
 
 import BottomNavigation from '../../components/bottom-navigation'
 import LocationHeader from '../../components/location-header'
 import insuranceBanner from '../../assets/images/home-insurance-banner.jpg'
+import { hasAuthSession } from '../../services/session'
 
 import './index.css'
 
@@ -64,6 +66,12 @@ const showDeveloping = (title: string) => {
 }
 
 export default function HomePage() {
+  useEffect(() => {
+    if (!hasAuthSession()) {
+      Taro.reLaunch({ url: '/pages/login/index' })
+    }
+  }, [])
+
   const openProduct = () => {
     Taro.navigateTo({ url: '/pages/index/index' })
   }
@@ -83,7 +91,7 @@ export default function HomePage() {
         </View>
 
         <View className='quick-entry-grid'>
-          <View className='quick-entry' onClick={() => Taro.redirectTo({ url: '/pages/mine/index' })}>
+          <View className='quick-entry' onClick={() => showDeveloping('订单/保单')}>
             <View className='quick-entry-icon quick-entry-blue'>
               <Text className='quick-entry-symbol'>▤</Text>
             </View>
@@ -162,4 +170,3 @@ export default function HomePage() {
     </View>
   )
 }
-
