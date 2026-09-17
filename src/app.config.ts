@@ -4,7 +4,11 @@ export default defineAppConfig({
     'pages/home/index',
     'pages/mine/index',
     'pages/index/index',
-    'pages/plan/index'
+    'pages/plan/index',
+    'pages/insure/index',
+    'pages/order-confirm/index',
+    'pages/pay-result/index',
+    'pages/orders/index'
   ],
   window: {
     backgroundTextStyle: 'light',

@@ -1,6 +1,6 @@
 import { Button, Image, ScrollView, Swiper, SwiperItem, Text, Video, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import './index.css'
 
@@ -32,8 +32,6 @@ type ProductIntroConfig = {
   companySlogan: string
   agreements: Agreement[]
 }
-
-const AGREEMENT_STORAGE_KEY = 'insurance-product-intro-agreement'
 
 // 后续接入「产品管理 - 介绍页配置」接口时，仅需替换这一份配置数据。
 const pageConfig: ProductIntroConfig = {
@@ -71,14 +69,9 @@ export default function ProductIntroPage() {
   const hasVideo = pageConfig.media.mode === 'video' && Boolean(pageConfig.media.videoUrl) && !videoFailed
   const hasImages = pageConfig.media.mode === 'images' && pageConfig.media.images.length > 0
 
-  useEffect(() => {
-    setAgreementAccepted(Boolean(Taro.getStorageSync(AGREEMENT_STORAGE_KEY)))
-  }, [])
-
   const toggleAgreement = () => {
     const nextValue = !agreementAccepted
     setAgreementAccepted(nextValue)
-    Taro.setStorageSync(AGREEMENT_STORAGE_KEY, nextValue)
   }
 
   const callService = () => {

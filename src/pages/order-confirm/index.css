@@ -1,0 +1,152 @@
+.confirm-page {
+  min-height: 100vh;
+  padding: 22px 22px 150px;
+  color: #293b51;
+  background: #f3f9fd;
+}
+
+.confirm-status {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  color: #4e789a;
+  background: #e8f5fd;
+  font-size: 21px;
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background: #48a6e2;
+}
+
+.confirm-card {
+  margin-bottom: 20px;
+  padding: 28px 28px 12px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(51,100,137,.06);
+}
+
+.confirm-card-title {
+  display: block;
+  padding-bottom: 20px;
+  color: #273a51;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.plan-summary {
+  padding: 18px 0 12px;
+  border-top: 1px solid #e9eef2;
+}
+
+.plan-summary-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: #33465b;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.plan-summary-price {
+  color: #3a9edf;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 66px;
+  color: #8794a2;
+  font-size: 22px;
+}
+
+.summary-row text:last-child {
+  color: #3f5063;
+  text-align: right;
+}
+
+.summary-value {
+  max-width: 430px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-card .summary-row {
+  border-top: 1px solid #f0f3f5;
+}
+
+.confirm-tip {
+  padding: 8px 18px 22px;
+  color: #8e9ba9;
+  font-size: 20px;
+  line-height: 1.65;
+}
+
+.confirm-action-bar {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding: 14px 24px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid #e4ebf0;
+  background: rgba(255,255,255,.98);
+}
+
+.confirm-total {
+  color: #3aa1e4;
+  font-size: 40px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.confirm-currency {
+  font-size: 23px;
+}
+
+.confirm-detail {
+  display: block;
+  margin-top: 2px;
+  color: #99a5b3;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.pay-button {
+  width: 270px;
+  height: 82px;
+  margin: 0;
+  border: 0;
+  border-radius: 43px;
+  color: #fff;
+  background: linear-gradient(90deg,#55b7ef,#2e91e5);
+  font-size: 28px;
+  line-height: 82px;
+}
+
+.pay-button::after {
+  display: none;
+}
+
+.confirm-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #738295;
+  flex-direction: column;
+}
+
+.confirm-empty button {
+  margin-top: 30px;
+}

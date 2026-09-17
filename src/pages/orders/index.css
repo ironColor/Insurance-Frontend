@@ -1,0 +1,180 @@
+.orders-page {
+  min-height: 100vh;
+  color: #2b3d52;
+  background: #f4f8fb;
+}
+
+.order-tabs {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  height: 92px;
+  padding: 0 18px;
+  border-bottom: 1px solid #e8edf1;
+  background: #fff;
+}
+
+.order-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c8998;
+  font-size: 23px;
+  flex: 1;
+}
+
+.order-tab-active {
+  color: #2f91dc;
+  font-weight: 700;
+}
+
+.order-tab-active::after {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 54px;
+  height: 5px;
+  border-radius: 4px;
+  background: #3a9fe5;
+  content: '';
+  transform: translateX(-50%);
+}
+
+.orders-list {
+  padding: 22px;
+}
+
+.order-card {
+  margin-bottom: 20px;
+  padding: 24px 26px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgba(56,94,126,.06);
+}
+
+.order-card-head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.order-number {
+  color: #8190a0;
+  font-size: 19px;
+}
+
+.order-status {
+  font-size: 22px;
+}
+
+.status-paid {
+  color: #35a17a;
+}
+
+.status-pending {
+  color: #e39a36;
+}
+
+.status-failed {
+  color: #e45f59;
+}
+
+.order-product {
+  display: block;
+  margin-top: 22px;
+  color: #2d4056;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.order-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  color: #919dab;
+  font-size: 19px;
+}
+
+.order-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+}
+
+.order-count {
+  color: #7f8c9b;
+  font-size: 20px;
+}
+
+.order-price {
+  color: #2f99df;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.order-action {
+  height: 58px;
+  margin: 0;
+  padding: 0 24px;
+  border: 1px solid #4ba2df;
+  border-radius: 30px;
+  color: #328fd3;
+  background: #fff;
+  font-size: 21px;
+  line-height: 56px;
+}
+
+.order-action::after,
+.empty-button::after {
+  display: none;
+}
+
+.orders-empty {
+  display: flex;
+  align-items: center;
+  padding: 170px 70px 0;
+  flex-direction: column;
+}
+
+.empty-document {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  color: #78b3dc;
+  background: #e8f4fb;
+  font-size: 58px;
+}
+
+.empty-title {
+  margin-top: 28px;
+  color: #4b5d72;
+  font-size: 29px;
+  font-weight: 700;
+}
+
+.empty-description {
+  margin-top: 14px;
+  color: #97a3b0;
+  font-size: 21px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.empty-button {
+  width: 280px;
+  height: 76px;
+  margin-top: 36px;
+  border: 0;
+  border-radius: 39px;
+  color: #fff;
+  background: linear-gradient(90deg,#56b7ee,#2f91e4);
+  font-size: 26px;
+  line-height: 76px;
+}

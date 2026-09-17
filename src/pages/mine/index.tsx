@@ -75,7 +75,7 @@ export default function MinePage() {
 
       <View className='mine-content'>
         <View className='service-shortcuts'>
-          <View className='service-shortcut' onClick={() => showDeveloping('订单/保单')}>
+          <View className='service-shortcut' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
             <View className='service-shortcut-icon service-blue'>▤</View>
             <Text>订单/保单</Text>
           </View>

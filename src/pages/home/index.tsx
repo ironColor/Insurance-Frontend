@@ -91,7 +91,7 @@ export default function HomePage() {
         </View>
 
         <View className='quick-entry-grid'>
-          <View className='quick-entry' onClick={() => showDeveloping('订单/保单')}>
+          <View className='quick-entry' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
             <View className='quick-entry-icon quick-entry-blue'>
               <Text className='quick-entry-symbol'>▤</Text>
             </View>
