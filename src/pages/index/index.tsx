@@ -185,6 +185,9 @@ export default function ProductIntroPage() {
           </View>
         </View>
 
+      </View>
+
+      <View className='fixed-action-bar'>
         <View className='agreement-area'>
           <View
             className={`agreement-checkbox ${agreementAccepted ? 'agreement-checkbox-checked' : ''}`}
@@ -205,9 +208,6 @@ export default function ProductIntroPage() {
             ))}
           </View>
         </View>
-      </View>
-
-      <View className='fixed-action-bar'>
         <Button
           className={`start-button ${agreementAccepted ? 'start-button-enabled' : ''}`}
           disabled={!agreementAccepted}

@@ -1,6 +1,6 @@
 .product-intro-page {
   min-height: 100vh;
-  padding-bottom: 220px;
+  padding-bottom: 270px;
   color: #253654;
   background:
     radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.74) 0, rgba(255, 255, 255, 0) 30%),
@@ -282,7 +282,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  margin-top: 92px;
+  margin-bottom: 16px;
   color: #7f8e9d;
   font-size: 21px;
   line-height: 34px;
@@ -336,7 +336,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  padding: 18px 42px calc(16px + env(safe-area-inset-bottom));
+  padding: 12px 42px calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, rgba(233, 249, 255, 0) 0%, rgba(233, 249, 255, 0.96) 22%, #e9f9ff 100%);
 }
 
