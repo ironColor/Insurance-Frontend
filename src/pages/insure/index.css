@@ -179,6 +179,11 @@
   background: #fff;
 }
 
+.multi-option { display: flex; align-items: center; justify-content: space-between; min-height: 88px; border-bottom: 1px solid #edf1f5; color: #34475c; font-size: 25px; }
+.multi-check { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 2px solid #a8b8c7; border-radius: 8px; }
+.multi-check.selected { border-color: #3c98e3; color: #fff; background: #3c98e3; }
+.multi-done { margin-top: 26px; border: 0; border-radius: 40px; color: #fff; background: #3896e7; }
+
 .dialog-header {
   display: flex;
   align-items: center;

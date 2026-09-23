@@ -1,0 +1,11 @@
+.payment-page { min-height: 100vh; padding: 30px 22px 60px; background: #f4f8fc; color: #34495e; }
+.payment-amount { display: flex; align-items: center; flex-direction: column; padding: 52px 20px; border-radius: 22px; background: #e4f3ff; color: #718ca4; font-size: 23px; }
+.payment-amount text:last-child { margin-top: 14px; color: #278fd8; font-size: 54px; font-weight: 700; }
+.payment-card { margin-top: 20px; padding: 28px; border-radius: 22px; background: #fff; }
+.payment-heading { display: block; margin-bottom: 14px; font-size: 28px; font-weight: 700; }
+.payment-row { display: flex; justify-content: space-between; gap: 20px; padding: 20px 0; border-top: 1px solid #edf1f5; color: #687e92; font-size: 22px; }
+.payment-row text:last-child { color: #3a5269; text-align: right; }
+.payment-tip { display: block; margin: 26px 10px; color: #91a1b0; font-size: 20px; }
+.payment-button { margin-top: 50px; border: 0; border-radius: 44px; color: #fff; background: #3895e5; font-size: 28px; }
+.payment-empty { display: flex; min-height: 80vh; align-items: center; justify-content: center; flex-direction: column; color: #738599; }
+.payment-empty button { margin-top: 30px; }

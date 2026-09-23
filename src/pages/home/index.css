@@ -23,28 +23,6 @@
   height: 100%;
 }
 
-.hero-pagination {
-  position: absolute;
-  right: 24px;
-  bottom: 18px;
-  display: flex;
-  align-items: center;
-}
-
-.hero-dot {
-  width: 9px;
-  height: 9px;
-  margin-left: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.hero-dot-active {
-  width: 34px;
-  border-radius: 9px;
-  background: #ffffff;
-}
-
 .quick-entry-grid {
   display: flex;
   justify-content: space-around;
@@ -159,25 +137,12 @@
   background: linear-gradient(145deg, #58a5ff, #216be8);
 }
 
-.product-icon-teal {
-  background: linear-gradient(145deg, #65ccc9, #38a4ad);
-}
-
-.product-icon-purple {
-  background: linear-gradient(145deg, #9b68ec, #6935d8);
-}
-
 .product-info {
   display: flex;
   min-width: 0;
   margin-left: 20px;
   flex: 1;
   flex-direction: column;
-}
-
-.product-name-row {
-  display: flex;
-  align-items: center;
 }
 
 .product-name {
@@ -189,28 +154,6 @@
   white-space: nowrap;
 }
 
-.product-tag {
-  margin-left: 12px;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 18px;
-}
-
-.product-tag-hot {
-  color: #4b7dd9;
-  background: #eaf1ff;
-}
-
-.product-tag-new {
-  color: #337fdf;
-  background: #e6f1ff;
-}
-
-.product-tag-popular {
-  color: #e24b50;
-  background: #fff0f0;
-}
-
 .product-description {
   overflow: hidden;
   margin-top: 8px;
@@ -218,24 +161,6 @@
   font-size: 21px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.product-price-row {
-  display: flex;
-  align-items: baseline;
-  margin-top: 10px;
-}
-
-.product-price {
-  color: #2e7fe6;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.product-unit {
-  margin-left: 3px;
-  color: #7d8998;
-  font-size: 19px;
 }
 
 .insure-button {
@@ -264,18 +189,16 @@
   font-size: 20px;
 }
 
-.partner-grid {
-  display: grid;
-  padding: 4px 8px 20px;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px 14px;
-}
+.partner-scroll { width: 100%; }
+.partner-grid { display: inline-flex; min-width: 100%; gap: 14px; padding: 4px 8px 20px; }
 
 .partner-item {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 180px;
   height: 82px;
+  flex: 0 0 auto;
   border-radius: 12px;
   background: #fbfcfe;
   flex-direction: column;
@@ -314,4 +237,3 @@
   background: #77a9e8;
   font-size: 16px;
 }
-

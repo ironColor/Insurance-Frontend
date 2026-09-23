@@ -1,0 +1,12 @@
+.order-detail-page { min-height: 100vh; padding: 24px 22px 60px; background: #f4f8fc; color: #34475b; }
+.order-detail-status { display: flex; justify-content: space-between; gap: 16px; padding: 30px 28px; border-radius: 20px; background: #e4f2ff; color: #2b86d2; font-size: 25px; }
+.order-detail-status text:last-child { color: #7890a6; font-size: 19px; }
+.order-detail-card { margin-top: 20px; padding: 24px 28px; border-radius: 22px; background: #fff; }
+.order-detail-title { display: block; margin-bottom: 12px; color: #2f4359; font-size: 29px; font-weight: 700; }
+.order-detail-plan + .order-detail-plan { margin-top: 20px; border-top: 1px solid #eaf0f5; }
+.order-detail-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding: 14px 0; color: #8493a2; font-size: 21px; }
+.order-detail-line text:last-child { max-width: 65%; color: #394e63; text-align: right; overflow-wrap: anywhere; }
+.order-detail-line.prominent, .order-detail-line.prominent text:last-child { color: #2d8edb; font-size: 24px; font-weight: 600; }
+.order-detail-action { margin-top: 36px; border: 0; border-radius: 44px; color: #fff; background: #3897e9; font-size: 27px; }
+.detail-empty { display: flex; min-height: 80vh; align-items: center; justify-content: center; flex-direction: column; color: #718397; font-size: 25px; }
+.detail-empty button { margin-top: 28px; }

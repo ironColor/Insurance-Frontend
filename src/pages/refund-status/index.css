@@ -1,0 +1,11 @@
+.refund-status-page { min-height: 100vh; padding: 24px 22px; background: #f4f8fc; color: #34495d; }
+.refund-status-hero { display: flex; align-items: center; flex-direction: column; padding: 58px 22px; border-radius: 22px; background: #e5f4ff; }
+.refund-status-hero text:first-child { color: #2d91d9; font-size: 34px; font-weight: 700; }
+.refund-status-hero text:last-child { margin-top: 15px; color: #8296a9; font-size: 21px; }
+.refund-status-card { margin-top: 20px; padding: 26px 28px; border-radius: 22px; background: #fff; }
+.refund-status-card > text { display: block; margin-bottom: 18px; font-size: 28px; font-weight: 700; }
+.refund-status-card > view { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-top: 1px solid #edf1f5; color: #7b8fa2; font-size: 22px; }
+.refund-status-card > view text:last-child { color: #394e63; text-align: right; }
+.refund-status-page > button { margin-top: 34px; border-radius: 42px; color: #348fd8; background: #fff; }
+.refund-status-empty { display: flex; min-height: 80vh; align-items: center; justify-content: center; flex-direction: column; color: #708297; }
+.refund-status-empty button { margin-top: 28px; }

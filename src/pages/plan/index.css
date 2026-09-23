@@ -272,9 +272,14 @@
 
 .premium-detail {
   margin-top: 2px;
-  color: #9aa6b4;
+  color: #318fd3;
   font-size: 19px;
 }
+
+.fee-sheet { max-height: 65vh; }
+.fee-line { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 24px 0; border-bottom: 1px solid #edf1f4; color: #35485c; font-size: 25px; }
+.fee-line-note { display: block; margin-top: 8px; color: #94a1ad; font-size: 19px; }
+.fee-line-total { border: 0; color: #278edc; font-weight: 700; }
 
 .insure-now-button {
   width: 260px;

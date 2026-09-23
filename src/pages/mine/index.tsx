@@ -1,46 +1,29 @@
 import { Button, Image, Text, View } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { useEffect, useState } from 'react'
 
 import BottomNavigation from '../../components/bottom-navigation'
 import { getHeaderLayout } from '../../components/location-header'
 import { clearAuthSession, hasAuthSession } from '../../services/session'
+import { clearUserProfile, getUserProfile } from '../../services/profile'
+import { INSURANCE_DRAFT_KEY, INSURANCE_ORDERS_KEY } from '../../services/product'
 
 import './index.css'
-
-const AVATAR_STORAGE_KEY = 'insurance-user-avatar'
 
 const showDeveloping = (title: string) => {
   Taro.showToast({ title: `${title}功能建设中`, icon: 'none' })
 }
 
 export default function MinePage() {
-  const [avatarUrl, setAvatarUrl] = useState(() => Taro.getStorageSync<string>(AVATAR_STORAGE_KEY))
+  const [profile, setProfile] = useState(getUserProfile)
   const [headerLayout] = useState(getHeaderLayout)
+  useDidShow(() => setProfile(getUserProfile()))
 
   useEffect(() => {
     if (!hasAuthSession()) {
       Taro.reLaunch({ url: '/pages/login/index' })
     }
   }, [])
-
-  const changeAvatar = (event: { detail: { avatarUrl?: string } }) => {
-    const nextAvatar = event.detail.avatarUrl
-    if (!nextAvatar) return
-
-    setAvatarUrl(nextAvatar)
-    Taro.setStorageSync(AVATAR_STORAGE_KEY, nextAvatar)
-    Taro.showToast({ title: '头像已更新', icon: 'success' })
-  }
-
-  const showAbout = () => {
-    Taro.showModal({
-      title: '关于我们',
-      content: '正方形保险致力于为家庭提供简单、透明、安心的保险服务。',
-      showCancel: false,
-      confirmText: '我知道了'
-    })
-  }
 
   const logout = async () => {
     const result = await Taro.showModal({
@@ -54,7 +37,9 @@ export default function MinePage() {
     if (!result.confirm) return
 
     clearAuthSession()
-    Taro.removeStorageSync(AVATAR_STORAGE_KEY)
+    clearUserProfile()
+    Taro.removeStorageSync(INSURANCE_DRAFT_KEY)
+    Taro.removeStorageSync(INSURANCE_ORDERS_KEY)
     Taro.reLaunch({ url: '/pages/login/index' })
   }
 
@@ -65,11 +50,11 @@ export default function MinePage() {
         style={{ paddingTop: `${headerLayout.statusBarHeight + headerLayout.navigationHeight}px` }}
       >
         <View className='profile-avatar'>
-          {avatarUrl ? <Image className='profile-avatar-image' src={avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
+          {profile.avatarUrl ? <Image className='profile-avatar-image' src={profile.avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
         </View>
         <View className='profile-copy'>
-          <Text className='profile-phone'>166****0523</Text>
-          <Button className='change-avatar-button' openType='chooseAvatar' onChooseAvatar={changeAvatar}>修改头像</Button>
+          <Text className='profile-phone'>{profile.nickname || '我的账户'}</Text>
+          <Button className='change-avatar-button' onClick={() => Taro.navigateTo({ url: '/pages/avatar/index' })}>修改头像</Button>
         </View>
       </View>
 
@@ -94,12 +79,12 @@ export default function MinePage() {
         </View>
 
         <View className='mine-menu'>
-          <View className='mine-menu-row' onClick={() => showDeveloping('个人信息')}>
+          <View className='mine-menu-row' onClick={() => Taro.navigateTo({ url: '/pages/profile/index' })}>
             <View className='mine-menu-icon menu-blue'>♟</View>
             <Text className='mine-menu-name'>个人信息</Text>
             <Text className='mine-menu-arrow'>›</Text>
           </View>
-          <View className='mine-menu-row' onClick={showAbout}>
+          <View className='mine-menu-row' onClick={() => showDeveloping('关于我们')}>
             <View className='mine-menu-icon menu-teal'>◷</View>
             <Text className='mine-menu-name'>关于我们</Text>
             <Text className='mine-menu-arrow'>›</Text>

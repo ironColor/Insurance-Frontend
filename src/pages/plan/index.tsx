@@ -21,10 +21,21 @@ export default function PlanPage() {
   const [selections, setSelections] = useState<SelectedPlanMap>(createDefaultSelections)
   const [detail, setDetail] = useState<DetailState>(null)
   const [noticeVisible, setNoticeVisible] = useState(false)
+  const [feeVisible, setFeeVisible] = useState(false)
   const totalPremium = useMemo(() => calculatePremium(selections), [selections])
 
   const choosePlan = (productId: string, planId: string | null) => {
     setSelections((current) => ({ ...current, [productId]: planId }))
+  }
+
+  const chooseMorePlan = async (product: ProductItem) => {
+    const extraPlans = product.plans.slice(2)
+    try {
+      const result = await Taro.showActionSheet({ itemList: extraPlans.map((plan) => plan.name) })
+      choosePlan(product.id, extraPlans[result.tapIndex].id)
+    } catch {
+      // 取消选择时保留当前方案。
+    }
   }
 
   const continueInsuring = async () => {
@@ -43,7 +54,9 @@ export default function PlanPage() {
     })
     if (!result.confirm) return
 
-    Taro.setStorageSync(INSURANCE_DRAFT_KEY, { selectedPlans: selections, totalPremium, formValues: {} })
+    const savedDraft = Taro.getStorageSync<{ selectedPlans?: SelectedPlanMap; formValues?: Record<string, string> }>(INSURANCE_DRAFT_KEY)
+    const samePlans = productConfig.products.every((product) => savedDraft?.selectedPlans?.[product.id] === selections[product.id])
+    Taro.setStorageSync(INSURANCE_DRAFT_KEY, { selectedPlans: selections, totalPremium, formValues: samePlans ? savedDraft.formValues || {} : {} })
     Taro.navigateTo({ url: '/pages/insure/index' })
   }
 
@@ -75,11 +88,12 @@ export default function PlanPage() {
                     <Text>不选</Text>
                   </View>
                 )}
-                {product.plans.map((plan) => (
+                {product.plans.slice(0, 2).map((plan) => (
                   <View className={`plan-tab ${selectedPlan?.id === plan.id ? 'plan-tab-active' : ''}`} key={plan.id} onClick={() => choosePlan(product.id, plan.id)}>
                     <Text>{plan.name}</Text>
                   </View>
                 ))}
+                {product.plans.length > 2 && <View className={`plan-tab ${selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? 'plan-tab-active' : ''}`} onClick={() => chooseMorePlan(product)}><Text>{selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? selectedPlan.name : '更多方案'}</Text></View>}
               </View>
 
               {selectedPlan ? (
@@ -119,7 +133,7 @@ export default function PlanPage() {
       <View className='plan-action-bar'>
         <View className='premium-area'>
           <View><Text className='currency'>¥</Text><Text className='premium-value'>{totalPremium.toFixed(2)}</Text></View>
-          <Text className='premium-detail'>已选 {Object.values(selections).filter(Boolean).length} 个方案</Text>
+          <Text className='premium-detail' onClick={() => setFeeVisible(true)}>查看明细 ›</Text>
         </View>
         <Button className='insure-now-button' onClick={continueInsuring}>立即投保</Button>
       </View>
@@ -144,6 +158,22 @@ export default function PlanPage() {
               ))}
             </ScrollView>
             <Button className='sheet-button' onClick={() => setDetail(null)}>我知道了</Button>
+          </View>
+        </View>
+      )}
+
+      {feeVisible && (
+        <View className='sheet-mask' onClick={() => setFeeVisible(false)}>
+          <View className='detail-sheet fee-sheet' onClick={(event) => event.stopPropagation()}>
+            <View className='sheet-header'>
+              <Text className='sheet-title'>缴费明细</Text>
+              <View className='sheet-close' onClick={() => setFeeVisible(false)}>×</View>
+            </View>
+            {productConfig.products.map((product) => {
+              const plan = getSelectedPlan(product, selections)
+              return plan ? <View className='fee-line' key={product.id}><View><Text>{product.name}</Text><Text className='fee-line-note'>{plan.name} · 全额缴纳</Text></View><Text>¥{plan.premium.toFixed(2)}</Text></View> : null
+            })}
+            <View className='fee-line fee-line-total'><Text>总计</Text><Text>¥{totalPremium.toFixed(2)}</Text></View>
           </View>
         </View>
       )}

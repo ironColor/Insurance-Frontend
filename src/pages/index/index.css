@@ -149,52 +149,6 @@
   font-size: 22px;
 }
 
-.fake-controls {
-  position: absolute;
-  right: 26px;
-  bottom: 22px;
-  left: 26px;
-}
-
-.fake-progress {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.fake-progress-value {
-  width: 8%;
-  height: 100%;
-  border-radius: inherit;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.fake-control-row {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.fake-play {
-  font-size: 24px;
-}
-
-.fake-time {
-  margin-left: 20px;
-  font-size: 20px;
-}
-
-.fake-control-spacer {
-  flex: 1;
-}
-
-.fake-control-icon {
-  margin-left: 22px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 24px;
-}
-
 .service-card {
   margin-top: 52px;
   padding: 4px 28px;

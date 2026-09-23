@@ -40,8 +40,6 @@ export type ForceReadItem = {
   id: string
   title: string
   content: string[]
-  seconds: number
-  requireScroll: boolean
 }
 
 export type ProductConfig = {
@@ -52,6 +50,7 @@ export type ProductConfig = {
   products: ProductItem[]
   fieldGroups: FieldGroup[]
   forceRead: ForceReadItem[]
+  readRule: { mode: 'scroll' | 'timer'; seconds: number }
 }
 
 export type SelectedPlanMap = Record<string, string | null>
@@ -69,22 +68,22 @@ export type OrderRecord = {
   id: string
   createdAt: string
   paidAt?: string
-  status: '待支付' | '已支付' | '支付失败'
+  status: '待支付' | '已支付' | '支付失败' | '退款中' | '退款完成'
   totalPremium: number
   selectedPlans: SelectedPlanMap
   formValues: Record<string, string>
 }
 
 const commonProtectionDescriptions: Record<string, string> = {
-  '意外身故、残疾': '被保险人因意外伤害事故身故或残疾，保险公司按合同约定给付保险金。',
-  疾病身故: '被保险人在保险期间内因疾病身故，保险公司按合同约定给付疾病身故保险金。',
-  '意外医疗（门诊、住院）': '因意外伤害在二级及以上公立医院接受门诊或住院治疗，按约定比例赔付合理医疗费用。',
-  '住院医疗（意外、疾病）': '因意外或疾病住院治疗，对符合当地社会医疗保险规定的合理费用按约定比例赔付。',
-  重大疾病定额给付: '经专科医生初次确诊合同约定的重大疾病，按保险金额一次性给付。',
-  动物致伤疫苗费: '因动物咬伤、抓伤产生的伤口处理及狂犬病疫苗费用，在限额内报销。',
-  '牙齿（恒牙）意外损伤': '因意外导致恒牙损伤产生的合理治疗费用，在保险金额内报销。',
-  第三者赔偿责任: '被保险人造成第三者人身伤亡或财产损失，依法应承担的赔偿责任按合同约定赔付。',
-  附加被监护人身故或残疾责任: '被监护人因约定事故身故或残疾，按合同约定承担保险责任。'
+  '意外身故、残疾': '意外身故或残疾保障，给付条件以正式保险条款为准。',
+  疾病身故: '疾病身故保障，适用条件以正式保险条款为准。',
+  '意外医疗（门诊、住院）': '意外医疗保障，报销范围及比例以正式保险条款为准。',
+  '住院医疗（意外、疾病）': '住院医疗保障，报销范围及比例以正式保险条款为准。',
+  重大疾病定额给付: '重大疾病保障，疾病范围及给付条件以正式保险条款为准。',
+  动物致伤疫苗费: '动物致伤相关费用保障，适用范围以正式保险条款为准。',
+  '牙齿（恒牙）意外损伤': '恒牙意外损伤保障，适用范围以正式保险条款为准。',
+  第三者赔偿责任: '第三者赔偿责任保障，适用范围以正式保险条款为准。',
+  附加被监护人身故或残疾责任: '被监护人身故或残疾保障，适用范围以正式保险条款为准。'
 }
 
 const protections = (items: Array<[string, string]>): ProtectionItem[] =>
@@ -186,7 +185,8 @@ export const productConfig: ProductConfig = {
         { id: 'student-school', name: '学校名称', type: '文本', placeholder: '请输入学校名称', required: true },
         { id: 'student-grade', name: '年级', type: '单选', placeholder: '请选择年级', required: true, options: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'] },
         { id: 'student-class', name: '班级', type: '单选', placeholder: '请选择班级', required: true, options: ['1班', '2班', '3班', '4班'] },
-        { id: 'student-birthday', name: '出生日期', type: '日期', placeholder: '请选择出生日期', required: false }
+        { id: 'student-birthday', name: '出生日期', type: '日期', placeholder: '请选择出生日期', required: false },
+        { id: 'student-hobbies', name: '兴趣爱好', type: '多选', placeholder: '请选择兴趣爱好（可多选）', required: false, options: ['阅读', '运动', '音乐', '绘画'] }
       ]
     }
   ],
@@ -198,9 +198,7 @@ export const productConfig: ProductConfig = {
         '本产品由诚安达保险销售服务股份有限公司销售，承保公司以具体方案为准。',
         '投保前请仔细阅读保险条款，特别是责任免除部分。',
         '本产品保障期间为一年，到期后可续保。如有疑问，请联系保险顾问。'
-      ],
-      seconds: 0,
-      requireScroll: false
+      ]
     },
     {
       id: 'notice',
@@ -209,11 +207,10 @@ export const productConfig: ProductConfig = {
         '凡身体健康、能正常学习和生活的在校学生均可投保。',
         '请如实填写投保人与学生信息；保险责任、责任免除和理赔规则以正式保险条款为准。',
         '保单生效后按合同约定处理变更及退保，理赔时请提供真实、完整的证明材料。'
-      ],
-      seconds: 5,
-      requireScroll: true
+      ]
     }
-  ]
+  ],
+  readRule: { mode: 'timer', seconds: 10 }
 }
 
 export const createDefaultSelections = (): SelectedPlanMap =>

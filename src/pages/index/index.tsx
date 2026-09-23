@@ -1,5 +1,5 @@
 import { Button, Image, ScrollView, Swiper, SwiperItem, Text, Video, View } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 
 import './index.css'
@@ -65,6 +65,7 @@ export default function ProductIntroPage() {
   const [agreementAccepted, setAgreementAccepted] = useState(false)
   const [activeAgreement, setActiveAgreement] = useState<Agreement | null>(null)
   const [videoFailed, setVideoFailed] = useState(false)
+  useDidShow(() => setAgreementAccepted(false))
 
   const hasVideo = pageConfig.media.mode === 'video' && Boolean(pageConfig.media.videoUrl) && !videoFailed
   const hasImages = pageConfig.media.mode === 'images' && pageConfig.media.images.length > 0
@@ -141,19 +142,7 @@ export default function ProductIntroPage() {
           ) : (
             <View className='media-placeholder'>
               <View className='media-placeholder-shine' />
-              <Text className='media-placeholder-text'>视频将在预览时播放</Text>
-              <View className='fake-controls'>
-                <View className='fake-progress'>
-                  <View className='fake-progress-value' />
-                </View>
-                <View className='fake-control-row'>
-                  <Text className='fake-play'>▶</Text>
-                  <Text className='fake-time'>0:00 / 0:00</Text>
-                  <View className='fake-control-spacer' />
-                  <Text className='fake-control-icon'>⌕</Text>
-                  <Text className='fake-control-icon'>⌗</Text>
-                </View>
-              </View>
+              <Text className='media-placeholder-text'>{videoFailed ? '视频加载失败，请稍后重试' : '视频暂未配置'}</Text>
             </View>
           )}
         </View>

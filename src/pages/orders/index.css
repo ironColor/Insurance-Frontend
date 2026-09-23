@@ -4,6 +4,9 @@
   background: #f4f8fb;
 }
 
+.orders-search { display: flex; align-items: center; gap: 14px; margin: 20px 22px; padding: 14px 22px; border-radius: 16px; background: #fff; color: #92a2b2; font-size: 32px; }
+.orders-search input { flex: 1; min-width: 0; font-size: 23px; }
+
 .order-tabs {
   position: sticky;
   z-index: 10;
@@ -21,7 +24,7 @@
   align-items: center;
   justify-content: center;
   color: #7c8998;
-  font-size: 23px;
+  font-size: 21px;
   flex: 1;
 }
 

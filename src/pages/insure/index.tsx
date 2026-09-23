@@ -13,6 +13,7 @@ export default function InsurePage() {
   const [values, setValues] = useState<Record<string, string>>(draft.formValues || {})
   const [errors, setErrors] = useState<ErrorMap>({})
   const [detailVisible, setDetailVisible] = useState(false)
+  const [multiSelectField, setMultiSelectField] = useState<{ id: string; name: string; options: string[] } | null>(null)
   const [readVisible, setReadVisible] = useState(false)
   const [readIndex, setReadIndex] = useState(0)
   const [remaining, setRemaining] = useState(0)
@@ -24,7 +25,7 @@ export default function InsurePage() {
     return plan ? [{ productName: product.name, planName: plan.name, premium: plan.premium }] : []
   }), [draft.selectedPlans])
 
-  const canCompleteRead = Boolean(currentRead) && remaining === 0 && (!currentRead.requireScroll || scrolledToEnd)
+  const canCompleteRead = Boolean(currentRead) && (productConfig.readRule.mode === 'timer' ? remaining === 0 : scrolledToEnd)
 
   useEffect(() => {
     if (!readVisible || remaining <= 0) return
@@ -42,7 +43,11 @@ export default function InsurePage() {
     productConfig.fieldGroups.forEach((group) => group.fields.forEach((field) => {
       const value = (values[field.id] || '').trim()
       if (field.required && !value) nextErrors[field.id] = `请${field.type === '文本' || field.type === '身份证' || field.type === '手机' ? '输入' : '选择'}${field.name}`
-      else if (field.type === '身份证' && value && !/(^\d{17}[\dXx]$)|(^[A-Za-z0-9]{5,20}$)/.test(value)) nextErrors[field.id] = '证件号码格式不正确，请检查后重试'
+      else if (field.type === '身份证' && value) {
+        const certificateType = values[field.id.replace('id-number', 'id-type')]
+        const valid = certificateType === '居民身份证' ? /^\d{17}[\dXx]$/.test(value) : /^[A-Za-z0-9]{5,20}$/.test(value)
+        if (!valid) nextErrors[field.id] = certificateType === '居民身份证' ? '身份证号码位数不正确，请检查后重试' : '证件号码格式不正确，请检查后重试'
+      }
       else if (field.type === '手机' && value && !/^1\d{10}$/.test(value)) nextErrors[field.id] = '联系电话位数不正确，请检查后重试'
     }))
     setErrors(nextErrors)
@@ -56,8 +61,8 @@ export default function InsurePage() {
     setDraft(nextDraft)
     Taro.setStorageSync(INSURANCE_DRAFT_KEY, nextDraft)
     setReadIndex(0)
-    setRemaining(productConfig.forceRead[0]?.seconds || 0)
-    setScrolledToEnd(!productConfig.forceRead[0]?.requireScroll)
+    setRemaining(productConfig.readRule.mode === 'timer' ? productConfig.readRule.seconds : 0)
+    setScrolledToEnd(false)
     setReadVisible(true)
   }
 
@@ -85,8 +90,8 @@ export default function InsurePage() {
     if (readIndex < productConfig.forceRead.length - 1) {
       const nextIndex = readIndex + 1
       setReadIndex(nextIndex)
-      setRemaining(productConfig.forceRead[nextIndex].seconds)
-      setScrolledToEnd(!productConfig.forceRead[nextIndex].requireScroll)
+      setRemaining(productConfig.readRule.mode === 'timer' ? productConfig.readRule.seconds : 0)
+      setScrolledToEnd(false)
       return
     }
     setReadVisible(false)
@@ -114,6 +119,12 @@ export default function InsurePage() {
                       <Text className='form-arrow'>›</Text>
                     </View>
                   </Picker>
+                ) : field.type === '多选' ? (
+                  <View className='form-row' onClick={() => setMultiSelectField({ id: field.id, name: field.name, options: field.options || [] })}>
+                    <Text className='form-label'>{field.required && <Text className='required-mark'>*</Text>}{field.name}</Text>
+                    <Text className={values[field.id] ? 'form-value' : 'form-placeholder'}>{values[field.id] || field.placeholder}</Text>
+                    <Text className='form-arrow'>›</Text>
+                  </View>
                 ) : field.type === '单选' ? (
                   <Picker
                     mode='selector'
@@ -132,7 +143,7 @@ export default function InsurePage() {
                     <Input
                       className='form-input'
                       type={field.type === '手机' ? 'number' : 'text'}
-                      maxlength={field.type === '身份证' ? 18 : field.type === '手机' ? 11 : 50}
+                      maxlength={field.type === '身份证' ? 20 : field.type === '手机' ? 11 : 50}
                       placeholder={field.placeholder}
                       value={values[field.id] || ''}
                       onInput={(event) => updateValue(field.id, event.detail.value)}
@@ -171,6 +182,24 @@ export default function InsurePage() {
         </View>
       )}
 
+      {multiSelectField && (
+        <View className='dialog-mask' onClick={() => setMultiSelectField(null)}>
+          <View className='fee-dialog' onClick={(event) => event.stopPropagation()}>
+            <View className='dialog-header'><Text>{multiSelectField.name}</Text><Text className='dialog-close' onClick={() => setMultiSelectField(null)}>×</Text></View>
+            {multiSelectField.options.map((option) => {
+              const selected = (values[multiSelectField.id] || '').split('、').includes(option)
+              return <View className='multi-option' key={option} onClick={() => {
+                const next = new Set((values[multiSelectField.id] || '').split('、').filter(Boolean))
+                if (selected) next.delete(option)
+                else next.add(option)
+                updateValue(multiSelectField.id, multiSelectField.options.filter((item) => next.has(item)).join('、'))
+              }}><Text>{option}</Text><Text className={selected ? 'multi-check selected' : 'multi-check'}>{selected ? '✓' : ''}</Text></View>
+            })}
+            <Button className='multi-done' onClick={() => setMultiSelectField(null)}>确定</Button>
+          </View>
+        </View>
+      )}
+
       {readVisible && currentRead && (
         <View className='read-mask'>
           <View className='read-panel'>
@@ -189,7 +218,7 @@ export default function InsurePage() {
               <View className='read-end'>— 已阅读至底部 —</View>
             </ScrollView>
             <Text className='read-rule-tip'>
-              {remaining > 0 ? `请继续阅读 ${remaining} 秒` : currentRead.requireScroll && !scrolledToEnd ? '请下滑完整阅读页面内容' : '已满足阅读条件'}
+              {productConfig.readRule.mode === 'timer' && remaining > 0 ? `请继续阅读 ${remaining} 秒` : productConfig.readRule.mode === 'scroll' && !scrolledToEnd ? '请下滑完整阅读页面内容' : '已满足阅读条件'}
             </Text>
             <Button className={`read-button ${canCompleteRead ? 'read-button-enabled' : ''}`} disabled={!canCompleteRead} onClick={completeCurrentRead}>
               我已阅读并同意，{readIndex < productConfig.forceRead.length - 1 ? '下一步' : '确认订单'}

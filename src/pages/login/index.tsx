@@ -42,6 +42,11 @@ export default function LoginPage() {
     })
   }
 
+
+  const testFunction = async () => {
+
+  }
+
   const handleAuthorization = async (event: {
     detail: {
       errMsg: string
