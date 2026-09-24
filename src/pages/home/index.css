@@ -23,6 +23,10 @@
   height: 100%;
 }
 
+.hero-banner-empty { display: flex; align-items: center; justify-content: center; color: #6f8bab; font-size: 25px; }
+.home-retry { display: block; margin: 12px 0 0; color: #3686e8; text-align: center; font-size: 23px; }
+.home-empty { display: block; padding: 26px 12px; color: #9aa5b3; font-size: 23px; }
+
 .quick-entry-grid {
   display: flex;
   justify-content: space-around;
@@ -215,6 +219,8 @@
   color: #59687a;
   font-size: 17px;
 }
+
+.partner-logo { width: 126px; height: 44px; }
 
 .home-slogan {
   display: flex;

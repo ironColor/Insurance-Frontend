@@ -1,48 +1,71 @@
-import { Image, ScrollView, Text, View } from '@tarojs/components'
+import { Image, ScrollView, Swiper, SwiperItem, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import BottomNavigation from '../../components/bottom-navigation'
 import LocationHeader from '../../components/location-header'
-import insuranceBanner from '../../assets/images/home-insurance-banner.jpg'
+import { fetchHomeData, HomeBanner, InsuranceCompany, resolveMediaUrl } from '../../services/home'
 import { hasAuthSession } from '../../services/session'
 
 import './index.css'
-
-const partners = [
-  { name: '中国人保', sub: 'PICC', color: '#d53a32' },
-  { name: '中国人寿', sub: 'CHINA LIFE', color: '#168d74' },
-  { name: '太平洋保险', sub: 'CPIC', color: '#286bb2' },
-  { name: '中国平安', sub: 'PING AN', color: '#e36d23' },
-  { name: '紫金保险', sub: 'ZKI', color: '#7044a0' },
-  { name: '中国大地保险', sub: 'CCIC', color: '#246d8d' },
-  { name: '泰康保险', sub: 'TAIKANG', color: '#159989' },
-  { name: '阳光保险', sub: 'SUNSHINE', color: '#d69a32' }
-]
 
 const showDeveloping = (title: string) => {
   Taro.showToast({ title: `${title}功能建设中`, icon: 'none' })
 }
 
 export default function HomePage() {
+  const [banners, setBanners] = useState<HomeBanner[]>([])
+  const [companies, setCompanies] = useState<InsuranceCompany[]>([])
+  const [homeError, setHomeError] = useState('')
+
+  const loadHome = async () => {
+    try {
+      const data = await fetchHomeData()
+      setBanners(data.banners)
+      setCompanies(data.companies)
+      setHomeError('')
+    } catch (error) {
+      if (!hasAuthSession()) {
+        Taro.reLaunch({ url: '/pages/login/index' })
+        return
+      }
+      setHomeError(error instanceof Error ? error.message : '首页加载失败')
+    }
+  }
+
   useEffect(() => {
     if (!hasAuthSession()) {
       Taro.reLaunch({ url: '/pages/login/index' })
+      return
     }
+    void loadHome()
   }, [])
 
-  const openProduct = () => {
-    Taro.navigateTo({ url: '/pages/index/index' })
+  const openProduct = (productId?: number | string) => {
+    if (!productId) {
+      Taro.showToast({ title: '产品信息暂未配置', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: `/pages/index/index?productId=${encodeURIComponent(String(productId))}` })
   }
+
+  const products = banners.filter((banner, index, list) => banner.productId && list.findIndex((item) => item.productId === banner.productId) === index)
 
   return (
     <View className='home-page'>
       <LocationHeader />
 
       <View className='home-content'>
-        <View className='hero-banner' onClick={openProduct}>
-          <Image className='hero-banner-image' src={insuranceBanner} mode='aspectFill' />
-        </View>
+        {banners.length > 0 ? (
+          <Swiper className='hero-banner' circular autoplay indicatorDots>
+            {banners.map((banner, index) => (
+              <SwiperItem key={String(banner.bannerId || index)} onClick={() => openProduct(banner.productId)}>
+                <Image className='hero-banner-image' src={resolveMediaUrl(banner.bannerUrl)} mode='aspectFill' />
+              </SwiperItem>
+            ))}
+          </Swiper>
+        ) : <View className='hero-banner hero-banner-empty'><Text>{homeError || '暂无 Banner'}</Text></View>}
+        {homeError && <Text className='home-retry' onClick={() => void loadHome()}>点击重试</Text>}
 
         <View className='quick-entry-grid'>
           <View className='quick-entry' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
@@ -72,18 +95,21 @@ export default function HomePage() {
             <Text className='section-title'>热门产品</Text>
             <View className='section-title-underline' />
           </View>
-          <Text className='section-more' onClick={openProduct}>查看方案 ›</Text>
+          {products.length > 0 && <Text className='section-more' onClick={() => openProduct(products[0].productId)}>查看方案 ›</Text>}
         </View>
 
         <View className='product-list'>
-          <View className='product-card' onClick={openProduct}>
-            <View className='product-icon product-icon-blue'><Text>◆</Text></View>
-            <View className='product-info'>
-              <Text className='product-name'>学生保险保障方案</Text>
-              <Text className='product-description'>查看学平险及可选的监护人责任险方案</Text>
+          {products.map((product) => (
+            <View className='product-card' key={String(product.productId)} onClick={() => openProduct(product.productId)}>
+              <View className='product-icon product-icon-blue'><Text>◆</Text></View>
+              <View className='product-info'>
+                <Text className='product-name'>{product.productName || '保险产品'}</Text>
+                <Text className='product-description'>查看产品方案与保障详情</Text>
+              </View>
+              <View className='insure-button'>查看详情</View>
             </View>
-            <View className='insure-button'>查看详情</View>
-          </View>
+          ))}
+          {products.length === 0 && <Text className='home-empty'>暂无推荐产品</Text>}
         </View>
 
         <View className='section-heading partner-heading'>
@@ -95,12 +121,13 @@ export default function HomePage() {
 
         <ScrollView className='partner-scroll' scrollX>
           <View className='partner-grid'>
-            {partners.map((partner) => (
-              <View className='partner-item' key={partner.name}>
-                <Text className='partner-sub' style={{ color: partner.color }}>{partner.sub}</Text>
-                <Text className='partner-name'>{partner.name}</Text>
+            {companies.map((company, index) => (
+              <View className='partner-item' key={String(company.insCompanyId || index)}>
+                {company.logoUrl ? <Image className='partner-logo' src={resolveMediaUrl(company.logoUrl)} mode='aspectFit' /> : null}
+                <Text className='partner-name'>{company.companyNickName || company.companyName || '保险公司'}</Text>
               </View>
             ))}
+            {companies.length === 0 && <Text className='home-empty'>暂无合作保险公司</Text>}
           </View>
         </ScrollView>
 

@@ -3,8 +3,9 @@ import Taro from '@tarojs/taro'
 import { useEffect, useState } from 'react'
 
 import brandMarks from '../../assets/images/brand-marks.png'
-import { requestWechatAuthorization } from '../../services/auth'
-import { hasAuthSession, saveAuthSession } from '../../services/session'
+import { loginWithWechat } from '../../services/auth'
+import { cachePhone, clearUserProfile, fetchUserProfile } from '../../services/profile'
+import { hasAuthSession } from '../../services/session'
 
 import './index.css'
 
@@ -41,25 +42,17 @@ export default function LoginPage() {
       confirmText: '我知道了'
     })
   }
-
-
-  const testFunction = async () => {
-
-  }
-
   const handleAuthorization = async (event: {
     detail: {
       errMsg: string
       code?: string
-      encryptedData?: string
-      iv?: string
     }
   }) => {
     if (loggingIn) return
 
-    const { errMsg, code, encryptedData, iv } = event.detail
+    const { errMsg, code } = event.detail
 
-    if (!errMsg.includes(':ok') || (!code && !encryptedData)) {
+    if (!errMsg.includes(':ok') || !code) {
       setAuthorizationVisible(false)
       Taro.showToast({ title: '已拒绝授权', icon: 'none' })
       return
@@ -68,10 +61,16 @@ export default function LoginPage() {
     setLoggingIn(true)
 
     try {
-      await requestWechatAuthorization({ code, encryptedData, iv })
-
-      // 接入后端登录接口时，在 auth service 中用登录 code 和手机号 code 换取业务 token。
-      saveAuthSession()
+      const result = await loginWithWechat(code)
+      clearUserProfile()
+      cachePhone(result.phone, result.userId)
+      if (result.userId) {
+        try {
+          await fetchUserProfile()
+        } catch (error) {
+          console.error('获取用户资料失败', error)
+        }
+      }
 
       await Taro.showToast({
         title: '微信授权成功',
@@ -81,13 +80,11 @@ export default function LoginPage() {
 
       setAuthorizationVisible(false)
 
-      setTimeout(() => {
-        Taro.reLaunch({ url: '/pages/home/index' })
-      }, 600)
+      Taro.reLaunch({ url: '/pages/home/index' })
     } catch (error) {
       console.error('微信登录失败', error)
       Taro.showToast({
-        title: '登录失败，请稍后重试',
+        title: error instanceof Error ? error.message : '登录失败，请稍后重试',
         icon: 'none'
       })
     } finally {
@@ -146,22 +143,6 @@ export default function LoginPage() {
             <View className='authorization-divider' />
 
             <View className='permission-list'>
-              <View className='permission-item'>
-                <View className='permission-icon permission-icon-avatar'>像</View>
-                <View className='permission-copy'>
-                  <Text className='permission-name'>微信头像</Text>
-                  <Text className='permission-description'>用于完善个人资料</Text>
-                </View>
-              </View>
-
-              <View className='permission-item'>
-                <View className='permission-icon permission-icon-nickname'>称</View>
-                <View className='permission-copy'>
-                  <Text className='permission-name'>微信昵称</Text>
-                  <Text className='permission-description'>用于展示用户信息</Text>
-                </View>
-              </View>
-
               <View className='permission-item'>
                 <View className='permission-icon permission-icon-phone'>号</View>
                 <View className='permission-copy'>

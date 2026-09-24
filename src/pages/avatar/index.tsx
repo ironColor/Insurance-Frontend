@@ -2,12 +2,13 @@ import { Button, Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState } from 'react'
 
-import { getUserProfile, saveUserProfile } from '../../services/profile'
+import { getUserProfile, saveUserProfile, uploadUserAvatar } from '../../services/profile'
 
 import './index.css'
 
 export default function AvatarPage() {
   const [avatarUrl, setAvatarUrl] = useState(() => getUserProfile().avatarUrl)
+  const [saving, setSaving] = useState(false)
 
   const choose = async (sourceType: 'camera' | 'album') => {
     try {
@@ -18,7 +19,8 @@ export default function AvatarPage() {
     }
   }
 
-  const save = () => {
+  const save = async () => {
+    if (saving) return
     if (!avatarUrl) {
       Taro.showToast({ title: '请先选择头像', icon: 'none' })
       return
@@ -27,12 +29,17 @@ export default function AvatarPage() {
       Taro.navigateBack()
       return
     }
-    Taro.saveFile({ tempFilePath: avatarUrl }).then((result) => {
-      if (!('savedFilePath' in result)) throw new Error('保存失败')
-      saveUserProfile({ ...getUserProfile(), avatarUrl: result.savedFilePath })
+    setSaving(true)
+    try {
+      const uploadedUrl = await uploadUserAvatar(avatarUrl)
+      await saveUserProfile({ ...getUserProfile(), avatarUrl: uploadedUrl })
       Taro.showToast({ title: '头像已保存', icon: 'success' })
       Taro.navigateBack()
-    }).catch(() => Taro.showToast({ title: '头像保存失败，请重试', icon: 'none' }))
+    } catch (error) {
+      Taro.showToast({ title: error instanceof Error ? error.message : '头像保存失败，请重试', icon: 'none' })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -44,7 +51,7 @@ export default function AvatarPage() {
         <Button onClick={() => choose('camera')}>拍照</Button>
         <Button onClick={() => choose('album')}>从相册选择</Button>
       </View>
-      <Button className='avatar-save' onClick={save}>保存</Button>
+      <Button className='avatar-save' loading={saving} disabled={saving} onClick={save}>保存</Button>
     </View>
   )
 }

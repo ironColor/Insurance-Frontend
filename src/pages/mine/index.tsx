@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import BottomNavigation from '../../components/bottom-navigation'
 import { getHeaderLayout } from '../../components/location-header'
 import { clearAuthSession, hasAuthSession } from '../../services/session'
-import { clearUserProfile, getUserProfile } from '../../services/profile'
+import { clearUserProfile, fetchUserProfile, getUserProfile, hasProfileUserId } from '../../services/profile'
+import { logoutFromServer } from '../../services/auth'
 import { INSURANCE_DRAFT_KEY, INSURANCE_ORDERS_KEY } from '../../services/product'
 
 import './index.css'
@@ -17,7 +18,15 @@ const showDeveloping = (title: string) => {
 export default function MinePage() {
   const [profile, setProfile] = useState(getUserProfile)
   const [headerLayout] = useState(getHeaderLayout)
-  useDidShow(() => setProfile(getUserProfile()))
+  useDidShow(() => {
+    setProfile(getUserProfile())
+    if (hasAuthSession() && hasProfileUserId()) {
+      void fetchUserProfile().then(setProfile).catch((error) => {
+        if (!hasAuthSession()) Taro.reLaunch({ url: '/pages/login/index' })
+        else Taro.showToast({ title: error instanceof Error ? error.message : '个人信息加载失败', icon: 'none' })
+      })
+    }
+  })
 
   useEffect(() => {
     if (!hasAuthSession()) {
@@ -36,11 +45,24 @@ export default function MinePage() {
 
     if (!result.confirm) return
 
+    try {
+      await logoutFromServer()
+    } catch (error) {
+      console.error('服务端退出登录失败', error)
+    }
     clearAuthSession()
     clearUserProfile()
     Taro.removeStorageSync(INSURANCE_DRAFT_KEY)
     Taro.removeStorageSync(INSURANCE_ORDERS_KEY)
     Taro.reLaunch({ url: '/pages/login/index' })
+  }
+
+  const openAvatar = () => {
+    if (!hasProfileUserId()) {
+      Taro.showToast({ title: '服务端未返回用户标识，暂无法修改头像', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: '/pages/avatar/index' })
   }
 
   return (
@@ -54,7 +76,7 @@ export default function MinePage() {
         </View>
         <View className='profile-copy'>
           <Text className='profile-phone'>{profile.nickname || '我的账户'}</Text>
-          <Button className='change-avatar-button' onClick={() => Taro.navigateTo({ url: '/pages/avatar/index' })}>修改头像</Button>
+          <Button className='change-avatar-button' onClick={openAvatar}>修改头像</Button>
         </View>
       </View>
 
