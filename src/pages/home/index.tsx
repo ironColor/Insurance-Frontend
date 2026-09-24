@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import BottomNavigation from '../../components/bottom-navigation'
 import LocationHeader from '../../components/location-header'
+import fallbackBanner from '../../assets/images/home-insurance-banner.jpg'
 import { fetchHomeData, HomeBanner, InsuranceCompany, resolveMediaUrl } from '../../services/home'
 import { hasAuthSession } from '../../services/session'
 
@@ -56,6 +57,13 @@ export default function HomePage() {
       <LocationHeader />
 
       <View className='home-content'>
+        <View className='home-intro'>
+          <View>
+            <Text className='home-intro-kicker'>正方形保险 · 安心服务</Text>
+            <Text className='home-intro-title'>为每一份成长，添一份保障</Text>
+          </View>
+          <View className='home-intro-mark'>保</View>
+        </View>
         {banners.length > 0 ? (
           <Swiper className='hero-banner' circular autoplay indicatorDots>
             {banners.map((banner, index) => (
@@ -64,19 +72,20 @@ export default function HomePage() {
               </SwiperItem>
             ))}
           </Swiper>
-        ) : <View className='hero-banner hero-banner-empty'><Text>{homeError || '暂无 Banner'}</Text></View>}
-        {homeError && <Text className='home-retry' onClick={() => void loadHome()}>点击重试</Text>}
+        ) : <View className='hero-banner hero-banner-fallback'><Image className='hero-banner-image' src={fallbackBanner} mode='aspectFill' /></View>}
+        {homeError && <View className='home-error'><Text>{homeError}</Text><Text className='home-retry' onClick={() => void loadHome()}>重新加载 ›</Text></View>}
 
+        <View className='home-section-label'><Text>常用服务</Text><Text className='home-section-caption'>所需服务，快速直达</Text></View>
         <View className='quick-entry-grid'>
           <View className='quick-entry' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
             <View className='quick-entry-icon quick-entry-blue'>
               <Text className='quick-entry-symbol'>▤</Text>
             </View>
-            <Text className='quick-entry-name'>订单/保单</Text>
+            <Text className='quick-entry-name'>订单保单</Text>
           </View>
           <View className='quick-entry' onClick={() => showDeveloping('理赔报案')}>
             <View className='quick-entry-icon quick-entry-teal'>
-              <Text className='quick-entry-symbol'>!</Text>
+              <Text className='quick-entry-symbol'>＋</Text>
             </View>
             <Text className='quick-entry-name'>理赔报案</Text>
           </View>
@@ -88,32 +97,32 @@ export default function HomePage() {
           </View>
         </View>
 
-        <View className='home-divider' />
-
         <View className='section-heading'>
           <View>
+            <Text className='section-kicker'>精选保障</Text>
             <Text className='section-title'>热门产品</Text>
-            <View className='section-title-underline' />
           </View>
-          {products.length > 0 && <Text className='section-more' onClick={() => openProduct(products[0].productId)}>查看方案 ›</Text>}
+          {products.length > 0 && <Text className='section-more' onClick={() => openProduct(products[0].productId)}>查看方案  ›</Text>}
         </View>
 
         <View className='product-list'>
-          {products.map((product) => (
+          {products.map((product, index) => (
             <View className='product-card' key={String(product.productId)} onClick={() => openProduct(product.productId)}>
-              <View className='product-icon product-icon-blue'><Text>◆</Text></View>
+              <View className={`product-icon product-icon-${index % 3}`}><Text>✦</Text></View>
               <View className='product-info'>
+                <Text className='product-tag'>保障方案</Text>
                 <Text className='product-name'>{product.productName || '保险产品'}</Text>
-                <Text className='product-description'>查看产品方案与保障详情</Text>
+                <Text className='product-description'>了解保障内容与投保方案</Text>
               </View>
-              <View className='insure-button'>查看详情</View>
+              <View className='insure-button'>查看 ›</View>
             </View>
           ))}
-          {products.length === 0 && <Text className='home-empty'>暂无推荐产品</Text>}
+          {products.length === 0 && <View className='home-empty-card'><Text className='home-empty-title'>暂无推荐产品</Text><Text className='home-empty-copy'>可稍后再来看看</Text></View>}
         </View>
 
         <View className='section-heading partner-heading'>
           <View>
+            <Text className='section-kicker'>值得信赖</Text>
             <Text className='section-title'>合作保险公司</Text>
             <Text className='section-subtitle'>与多家知名保险机构深度合作，保障更安心</Text>
           </View>
@@ -127,13 +136,13 @@ export default function HomePage() {
                 <Text className='partner-name'>{company.companyNickName || company.companyName || '保险公司'}</Text>
               </View>
             ))}
-            {companies.length === 0 && <Text className='home-empty'>暂无合作保险公司</Text>}
+            {companies.length === 0 && <Text className='home-empty'>暂无合作机构信息</Text>}
           </View>
         </ScrollView>
 
         <View className='home-slogan'>
           <View className='slogan-shield'>✓</View>
-          <Text>安心保 · 安心保障每一家</Text>
+          <Text>正方形保险 · 用心守护每一家</Text>
         </View>
       </View>
 

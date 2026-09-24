@@ -98,10 +98,24 @@ export default function LoginPage() {
 
       <View className='login-content'>
         <View className='brand-block'>
-          <View className='brand-logo-viewport'>
-            <Image className='brand-logo-source' src={brandMarks} mode='widthFix' />
+          <View className='brand-logo-frame'>
+            <View className='brand-logo-viewport'>
+              <Image className='brand-logo-source' src={brandMarks} mode='widthFix' />
+            </View>
           </View>
           <Text className='brand-name'>正方形保险</Text>
+        </View>
+
+        <View className='login-hero-copy'>
+          <Text className='login-eyebrow'>正方形保险 · 安心保障</Text>
+          <Text className='login-headline'>守护重要的每一步</Text>
+          <Text className='login-description'>便捷查看保障与订单，让关爱时刻在线</Text>
+        </View>
+
+        <View className='login-feature-row'>
+          <View><Text className='login-feature-icon'>✓</Text><Text>保障查询</Text></View>
+          <View><Text className='login-feature-icon'>✓</Text><Text>订单管理</Text></View>
+          <View><Text className='login-feature-icon'>✓</Text><Text>专属服务</Text></View>
         </View>
 
         <Button
@@ -126,6 +140,7 @@ export default function LoginPage() {
         </Button>
 
         <Text className='login-tip'>手机号验证通过后将自动创建账号</Text>
+        <Text className='login-footer'>正方形保险 · 用心守护每一家</Text>
       </View>
 
       {authorizationVisible && (

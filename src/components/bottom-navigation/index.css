@@ -89,3 +89,7 @@
   background: currentColor;
 }
 
+.bottom-navigation { border-top-color: #e7eef6; box-shadow: 0 -8px 24px rgba(28, 67, 109, .045); }
+.navigation-item { color: #a2b4c5; }
+.navigation-item-active { color: #2676c5; }
+.navigation-label { font-size: 21px; font-weight: 600; }

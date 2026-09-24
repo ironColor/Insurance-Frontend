@@ -71,27 +71,32 @@ export default function MinePage() {
         className='profile-hero'
         style={{ paddingTop: `${headerLayout.statusBarHeight + headerLayout.navigationHeight}px` }}
       >
-        <View className='profile-avatar'>
-          {profile.avatarUrl ? <Image className='profile-avatar-image' src={profile.avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
-        </View>
-        <View className='profile-copy'>
-          <Text className='profile-phone'>{profile.nickname || '我的账户'}</Text>
-          <Button className='change-avatar-button' onClick={openAvatar}>修改头像</Button>
+        <View className='mine-hero-heading'><Text>我的</Text><Text>正方形保险</Text></View>
+        <View className='mine-identity'>
+          <View className='profile-avatar'>
+            {profile.avatarUrl ? <Image className='profile-avatar-image' src={profile.avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
+          </View>
+          <View className='profile-copy'>
+            <Text className='profile-phone'>{profile.nickname || '我的账户'}</Text>
+            <Text className='profile-hero-subtitle'>每一份安心，都为你妥善珍藏</Text>
+            <Button className='change-avatar-button' onClick={openAvatar}>修改头像</Button>
+          </View>
         </View>
       </View>
 
       <View className='mine-content'>
+        <View className='mine-section-heading'><Text>我的服务</Text><Text>便捷管理保障与售后</Text></View>
         <View className='service-shortcuts'>
           <View className='service-shortcut' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
             <View className='service-shortcut-icon service-blue'>▤</View>
-            <Text>订单/保单</Text>
+            <Text>订单保单</Text>
           </View>
           <View className='service-shortcut' onClick={() => showDeveloping('理赔报案')}>
-            <View className='service-shortcut-icon service-teal'>!</View>
+            <View className='service-shortcut-icon service-teal'>＋</View>
             <Text>理赔报案</Text>
           </View>
           <View className='service-shortcut' onClick={() => showDeveloping('投诉建议')}>
-            <View className='service-shortcut-icon service-orange'>▣</View>
+            <View className='service-shortcut-icon service-orange'>☷</View>
             <Text>投诉建议</Text>
           </View>
           <View className='service-shortcut' onClick={() => showDeveloping('常见问题')}>
@@ -100,19 +105,20 @@ export default function MinePage() {
           </View>
         </View>
 
+        <View className='mine-section-heading mine-account-heading'><Text>账户与帮助</Text><Text>资料与服务支持</Text></View>
         <View className='mine-menu'>
           <View className='mine-menu-row' onClick={() => Taro.navigateTo({ url: '/pages/profile/index' })}>
-            <View className='mine-menu-icon menu-blue'>♟</View>
+            <View className='mine-menu-icon menu-blue'>人</View>
             <Text className='mine-menu-name'>个人信息</Text>
             <Text className='mine-menu-arrow'>›</Text>
           </View>
           <View className='mine-menu-row' onClick={() => showDeveloping('关于我们')}>
-            <View className='mine-menu-icon menu-teal'>◷</View>
+            <View className='mine-menu-icon menu-teal'>盾</View>
             <Text className='mine-menu-name'>关于我们</Text>
             <Text className='mine-menu-arrow'>›</Text>
           </View>
           <View className='mine-menu-row' onClick={() => Taro.showToast({ title: '客服电话配置中', icon: 'none' })}>
-            <View className='mine-menu-icon menu-orange'>⌕</View>
+            <View className='mine-menu-icon menu-orange'>话</View>
             <Text className='mine-menu-name'>客服电话</Text>
             <Text className='mine-menu-arrow'>›</Text>
           </View>

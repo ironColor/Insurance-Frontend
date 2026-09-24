@@ -73,7 +73,7 @@ export default function LocationHeader() {
             <View className='location-pin'>
               <View className='location-pin-dot' />
             </View>
-            <Text className='location-text'>{region.join('')}</Text>
+            <View className='location-copy'><Text className='location-label'>当前服务地区</Text><Text className='location-text'>{region.join('')}</Text></View>
             <View className='location-chevron' />
           </View>
         </Picker>

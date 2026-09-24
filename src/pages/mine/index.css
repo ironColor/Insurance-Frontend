@@ -219,3 +219,34 @@
   font-size: 42px;
   font-weight: 300;
 }
+
+.mine-page { background: #f5f8fc; }
+.profile-hero { display: flex; align-items: stretch; min-height: 340px; padding-right: 34px; padding-bottom: 86px; padding-left: 34px; background: linear-gradient(135deg, #123c6e 0%, #1c5a9a 65%, #2879bf 100%); flex-direction: column; }
+.profile-hero::before { top: -90px; right: -110px; width: 360px; height: 360px; background: rgba(255, 255, 255, .045); }
+.profile-hero::after { right: 90px; bottom: -230px; width: 330px; height: 330px; background: rgba(255, 255, 255, .04); }
+.mine-hero-heading { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; padding: 15px 3px 40px; font-size: 36px; font-weight: 700; }
+.mine-hero-heading text + text { color: rgba(255, 255, 255, .7); font-size: 21px; font-weight: 500; letter-spacing: 2px; }
+.mine-identity { position: relative; z-index: 1; display: flex; align-items: center; }
+.profile-avatar { width: 120px; height: 120px; border: 4px solid rgba(255, 255, 255, .58); color: #2862a0; background: #e8f3ff; box-shadow: 0 12px 26px rgba(3, 29, 64, .16); }
+.profile-copy { margin-left: 23px; }
+.profile-phone { font-size: 32px; letter-spacing: 0; }
+.profile-hero-subtitle { margin-top: 6px; color: rgba(255, 255, 255, .8); font-size: 22px; }
+.change-avatar-button { width: 126px; height: 42px; margin-top: 16px; border: 1px solid rgba(255, 255, 255, .4); border-radius: 22px; background: rgba(255, 255, 255, .1); font-size: 19px; line-height: 40px; }
+.mine-content { margin-top: -48px; padding: 0 28px 28px; }
+.mine-section-heading { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; margin: 0 3px 18px; color: #fff; font-size: 29px; font-weight: 700; }
+.mine-section-heading text + text { color: rgba(255, 255, 255, .8); font-size: 21px; font-weight: 400; }
+.mine-account-heading { margin: 34px 3px 18px; color: #183654; }
+.mine-account-heading text + text { color: #95a6b7; }
+.service-shortcuts { padding: 29px 13px 27px; border: 1px solid #e9f0f8; border-radius: 25px; box-shadow: 0 12px 30px rgba(32, 72, 112, .06); }
+.service-shortcut { color: #3c536b; font-size: 20px; font-weight: 600; }
+.service-shortcut-icon { width: 76px; height: 76px; margin-bottom: 13px; border-radius: 23px; font-size: 31px; }
+.service-blue, .menu-blue { color: #286dc6; background: #e6f1ff; }
+.service-teal, .menu-teal { color: #159e9b; background: #e3f8f4; }
+.service-orange, .menu-orange { color: #c7894f; background: #fff1e4; }
+.service-purple { color: #8662ca; background: #f0eafa; }
+.mine-menu { margin-top: 0; padding: 0 25px; border: 1px solid #e9f0f8; border-radius: 25px; background: #fff; box-shadow: 0 12px 30px rgba(32, 72, 112, .045); }
+.mine-menu-row { min-height: 110px; }
+.mine-menu-icon { width: 62px; height: 62px; border-radius: 19px; font-size: 24px; }
+.mine-menu-name { margin-left: 22px; color: #29445f; font-size: 26px; font-weight: 600; }
+.mine-menu-arrow { color: #a5b5c5; font-size: 38px; }
+.logout-button { height: 90px; margin-top: 32px; border: 1px solid #e3edf7; border-radius: 22px; color: #3779bf; background: #fff; box-shadow: none; font-size: 25px; line-height: 90px; }
