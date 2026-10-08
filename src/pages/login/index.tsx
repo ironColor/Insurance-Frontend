@@ -1,8 +1,8 @@
-import { Button, Image, Text, View } from '@tarojs/components'
+import { Button, Checkbox, CheckboxGroup, Image, Label, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import brandMarks from '../../assets/images/brand-marks.png'
+import loginLogo from '../../assets/images/login-logo.jpg'
 import { loginWithWechat } from '../../services/auth'
 import { cachePhone, clearUserProfile, fetchUserProfile } from '../../services/profile'
 import { hasAuthSession } from '../../services/session'
@@ -10,8 +10,9 @@ import { hasAuthSession } from '../../services/session'
 import './index.css'
 
 export default function LoginPage() {
-  const [authorizationVisible, setAuthorizationVisible] = useState(false)
+  const [agreementAccepted, setAgreementAccepted] = useState(false)
   const [loggingIn, setLoggingIn] = useState(false)
+  const loginPending = useRef(false)
 
   useEffect(() => {
     if (hasAuthSession()) {
@@ -19,15 +20,8 @@ export default function LoginPage() {
     }
   }, [])
 
-  const showAuthorization = () => {
-    if (!loggingIn) setAuthorizationVisible(true)
-  }
-
-  const rejectAuthorization = () => {
-    if (loggingIn) return
-
-    setAuthorizationVisible(false)
-    Taro.showToast({ title: '已拒绝授权', icon: 'none' })
+  const remindAgreement = () => {
+    Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' })
   }
 
   const showAgreement = (type: 'service' | 'privacy') => {
@@ -42,22 +36,31 @@ export default function LoginPage() {
       confirmText: '我知道了'
     })
   }
+
   const handleAuthorization = async (event: {
     detail: {
       errMsg: string
       code?: string
     }
   }) => {
-    if (loggingIn) return
-
-    const { errMsg, code } = event.detail
-
-    if (!errMsg.includes(':ok') || !code) {
-      setAuthorizationVisible(false)
-      Taro.showToast({ title: '已拒绝授权', icon: 'none' })
+    if (loginPending.current) return
+    if (!agreementAccepted) {
+      remindAgreement()
       return
     }
 
+    const { errMsg, code } = event.detail
+
+    if (errMsg !== 'getPhoneNumber:ok' || !code) {
+      const cancelled = /deny|cancel/i.test(errMsg)
+      Taro.showToast({
+        title: cancelled ? '已取消手机号授权' : '手机号授权失败，请重试',
+        icon: 'none'
+      })
+      return
+    }
+
+    loginPending.current = true
     setLoggingIn(true)
 
     try {
@@ -78,8 +81,6 @@ export default function LoginPage() {
         duration: 900
       })
 
-      setAuthorizationVisible(false)
-
       Taro.reLaunch({ url: '/pages/home/index' })
     } catch (error) {
       console.error('微信登录失败', error)
@@ -88,114 +89,61 @@ export default function LoginPage() {
         icon: 'none'
       })
     } finally {
+      loginPending.current = false
       setLoggingIn(false)
     }
   }
 
   return (
     <View className='login-page'>
-      <View className='login-safe-area' />
-
       <View className='login-content'>
         <View className='brand-block'>
-          <View className='brand-logo-frame'>
-            <View className='brand-logo-viewport'>
-              <Image className='brand-logo-source' src={brandMarks} mode='widthFix' />
-            </View>
+          <Image className='brand-logo' src={loginLogo} mode='aspectFill' />
+          <Text className='login-headline'>登录正方形平台</Text>
+          <View className='login-description'>
+            <Text>使用微信账号快捷登录</Text>
+            <Text>无需输入账号密码</Text>
           </View>
-          <Text className='brand-name'>正方形保险</Text>
-        </View>
-
-        <View className='login-hero-copy'>
-          <Text className='login-eyebrow'>正方形保险 · 安心保障</Text>
-          <Text className='login-headline'>守护重要的每一步</Text>
-          <Text className='login-description'>便捷查看保障与订单，让关爱时刻在线</Text>
-        </View>
-
-        <View className='login-feature-row'>
-          <View><Text className='login-feature-icon'>✓</Text><Text>保障查询</Text></View>
-          <View><Text className='login-feature-icon'>✓</Text><Text>订单管理</Text></View>
-          <View><Text className='login-feature-icon'>✓</Text><Text>专属服务</Text></View>
         </View>
 
         <Button
-          className={`wechat-login-button ${loggingIn ? 'wechat-login-button-loading' : ''}`}
+          className='wechat-login-button'
           disabled={loggingIn}
+          loading={loggingIn}
+          openType={agreementAccepted && !loggingIn ? 'getPhoneNumber' : undefined}
           hoverClass='wechat-login-button-hover'
-          onClick={showAuthorization}
+          onClick={() => {
+            if (!loginPending.current && !agreementAccepted) remindAgreement()
+          }}
+          onGetPhoneNumber={handleAuthorization}
         >
-          {!loggingIn && (
-            <View className='wechat-logo' aria-hidden>
-              <View className='wechat-bubble wechat-bubble-large'>
-                <View className='wechat-eye wechat-eye-left' />
-                <View className='wechat-eye wechat-eye-right' />
-              </View>
-              <View className='wechat-bubble wechat-bubble-small'>
-                <View className='wechat-eye wechat-eye-left' />
-                <View className='wechat-eye wechat-eye-right' />
-              </View>
-            </View>
-          )}
-          <Text className='wechat-login-text'>{loggingIn ? '登录中…' : '微信一键登录'}</Text>
+          {loggingIn ? '登录中…' : '手机号一键登录'}
         </Button>
-
-        <Text className='login-tip'>手机号验证通过后将自动创建账号</Text>
-        <Text className='login-footer'>正方形保险 · 用心守护每一家</Text>
       </View>
 
-      {authorizationVisible && (
-        <View className='authorization-overlay' catchMove onClick={rejectAuthorization}>
-          <View className='authorization-dialog' onClick={(event) => event.stopPropagation()}>
-            <View className='authorization-header'>
-              <View className='authorization-app-icon'>学</View>
-              <View className='authorization-heading'>
-                <Text className='authorization-app-name'>学平保</Text>
-                <Text className='authorization-title'>申请获取以下权限</Text>
-              </View>
-              <Text className='authorization-close' onClick={rejectAuthorization}>×</Text>
-            </View>
-
-            <View className='authorization-divider' />
-
-            <View className='permission-list'>
-              <View className='permission-item'>
-                <View className='permission-icon permission-icon-phone'>号</View>
-                <View className='permission-copy'>
-                  <Text className='permission-name'>手机号码</Text>
-                  <Text className='permission-description'>用于账号登录与实名认证</Text>
-                </View>
-              </View>
-            </View>
-
-            <View className='authorization-agreement'>
-              <Text>登录即表示你已阅读并同意</Text>
-              <Text className='agreement-link' onClick={() => showAgreement('service')}>《用户协议》</Text>
-              <Text>和</Text>
-              <Text className='agreement-link' onClick={() => showAgreement('privacy')}>《隐私政策》</Text>
-            </View>
-
-            <Button
-              className='authorization-allow-button'
-              disabled={loggingIn}
-              loading={loggingIn}
-              openType='getPhoneNumber'
-              hoverClass='authorization-allow-button-hover'
-              onGetPhoneNumber={handleAuthorization}
-            >
-              {loggingIn ? '授权中…' : '允许'}
-            </Button>
-
-            <Button
-              className='authorization-reject-button'
-              disabled={loggingIn}
-              hoverClass='authorization-reject-button-hover'
-              onClick={rejectAuthorization}
-            >
-              拒绝
-            </Button>
-          </View>
+      <CheckboxGroup
+        className='login-agreement'
+        onChange={(event) => {
+          if (!loginPending.current) setAgreementAccepted(event.detail.value.includes('agreement'))
+        }}
+      >
+        <Label className='login-agreement-checkbox-label'>
+          <Checkbox
+            className='login-agreement-checkbox'
+            value='agreement'
+            checked={agreementAccepted}
+            disabled={loggingIn}
+            color='#3b7bf5'
+            ariaLabel='已阅读并同意用户协议和隐私政策'
+          />
+        </Label>
+        <View className='login-agreement-copy'>
+          <Text>已阅读并同意</Text>
+          <Text className='agreement-link' onClick={() => showAgreement('service')}>《用户协议》</Text>
+          <Text>和</Text>
+          <Text className='agreement-link' onClick={() => showAgreement('privacy')}>《隐私政策》</Text>
         </View>
-      )}
+      </CheckboxGroup>
     </View>
   )
 }
