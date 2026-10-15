@@ -8,6 +8,9 @@ import './index.css'
 
 type ErrorMap = Record<string, string>
 
+const readItems = productConfig.forceRead.filter((item) => !item.important)
+const importantNotices = productConfig.forceRead.filter((item) => item.important)
+
 export default function InsurePage() {
   const [draft, setDraft] = useState<InsuranceDraft>(() => Taro.getStorageSync<InsuranceDraft>(INSURANCE_DRAFT_KEY) || { selectedPlans: {}, totalPremium: 0, formValues: {} })
   const [values, setValues] = useState<Record<string, string>>(draft.formValues || {})
@@ -18,7 +21,7 @@ export default function InsurePage() {
   const [readIndex, setReadIndex] = useState(0)
   const [remaining, setRemaining] = useState(0)
   const [scrolledToEnd, setScrolledToEnd] = useState(false)
-  const currentRead = productConfig.forceRead[readIndex]
+  const currentRead = readItems[readIndex]
 
   const feeItems = useMemo(() => productConfig.products.flatMap((product) => {
     const plan = product.plans.find((item) => item.id === draft.selectedPlans[product.id])
@@ -60,6 +63,10 @@ export default function InsurePage() {
     const nextDraft = { ...draft, formValues: values }
     setDraft(nextDraft)
     Taro.setStorageSync(INSURANCE_DRAFT_KEY, nextDraft)
+    if (readItems.length === 0) {
+      Taro.navigateTo({ url: '/pages/order-confirm/index' })
+      return
+    }
     setReadIndex(0)
     setRemaining(productConfig.readRule.mode === 'timer' ? productConfig.readRule.seconds : 0)
     setScrolledToEnd(false)
@@ -87,7 +94,7 @@ export default function InsurePage() {
 
   const completeCurrentRead = () => {
     if (!canCompleteRead) return
-    if (readIndex < productConfig.forceRead.length - 1) {
+    if (readIndex < readItems.length - 1) {
       const nextIndex = readIndex + 1
       setReadIndex(nextIndex)
       setRemaining(productConfig.readRule.mode === 'timer' ? productConfig.readRule.seconds : 0)
@@ -205,23 +212,33 @@ export default function InsurePage() {
           <View className='read-panel'>
             <View className='read-header'>
               <Text className='read-title'>{currentRead.title}</Text>
-              <Text className='read-step'>{readIndex + 1}/{productConfig.forceRead.length}</Text>
+              <Text className='read-step'>{readIndex + 1}/{readItems.length}</Text>
             </View>
             <View className='read-tabs'>
-              {productConfig.forceRead.map((item, index) => <Text key={item.id} className={index === readIndex ? 'read-tab-active' : ''}>{item.title}</Text>)}
+              {readItems.map((item, index) => <Text key={item.id} className={index === readIndex ? 'read-tab-active' : ''}>{item.title}</Text>)}
             </View>
-            <ScrollView className='read-content' scrollY onScrollToLower={() => setScrolledToEnd(true)} lowerThreshold={12}>
+            <ScrollView key={currentRead.id} className='read-content' scrollY onScrollToLower={() => setScrolledToEnd(true)} lowerThreshold={12}>
               <Text className='read-content-title'>{currentRead.title}</Text>
               {currentRead.content.map((paragraph, index) => <Text className='read-paragraph' key={paragraph}>{index + 1}. {paragraph}</Text>)}
               <Text className='read-section-title'>责任免除与特别约定</Text>
               <Text className='read-paragraph'>因故意行为、违法犯罪以及保险合同明确约定的其他责任免除情形，保险公司不承担赔付责任。请以正式条款为准。</Text>
               <View className='read-end'>— 已阅读至底部 —</View>
             </ScrollView>
+            {readIndex === 0 && importantNotices.length > 0 && (
+              <View className='read-important-notice'>
+                {importantNotices.map((notice) => (
+                  <View key={notice.id}>
+                    <Text className='read-important-title'>{notice.title}：</Text>
+                    {notice.content.map((paragraph) => <Text className='read-important-paragraph' key={paragraph}>{paragraph}</Text>)}
+                  </View>
+                ))}
+              </View>
+            )}
             <Text className='read-rule-tip'>
               {productConfig.readRule.mode === 'timer' && remaining > 0 ? `请继续阅读 ${remaining} 秒` : productConfig.readRule.mode === 'scroll' && !scrolledToEnd ? '请下滑完整阅读页面内容' : '已满足阅读条件'}
             </Text>
             <Button className={`read-button ${canCompleteRead ? 'read-button-enabled' : ''}`} disabled={!canCompleteRead} onClick={completeCurrentRead}>
-              我已阅读并同意，{readIndex < productConfig.forceRead.length - 1 ? '下一步' : '确认订单'}
+              我已阅读并同意，{readIndex < readItems.length - 1 ? '下一步' : '确认订单'}
             </Button>
           </View>
         </View>

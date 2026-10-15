@@ -248,6 +248,7 @@
   height: 88vh;
   padding: 28px 28px calc(22px + env(safe-area-inset-bottom));
   border-radius: 28px 28px 0 0;
+  overflow: hidden;
   background: #fff;
   flex-direction: column;
 }
@@ -257,6 +258,7 @@
   justify-content: space-between;
   color: #27394e;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .read-title {
@@ -274,6 +276,7 @@
   border-bottom: 1px solid #e9eef2;
   overflow-x: auto;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .read-tabs text {
@@ -290,8 +293,10 @@
 }
 
 .read-content {
-  height: 780px;
+  height: 0;
+  min-height: 0;
   padding: 24px 6px;
+  flex: 1;
 }
 
 .read-content-title {
@@ -325,11 +330,37 @@
   text-align: center;
 }
 
+.read-important-notice {
+  margin-top: 16px;
+  padding: 18px 22px;
+  border: 1px solid #f1d99d;
+  border-radius: 14px;
+  background: #fff8df;
+  box-shadow: 0 -6px 20px rgba(164, 123, 40, .06);
+  flex-shrink: 0;
+}
+
+.read-important-title {
+  display: block;
+  margin-bottom: 6px;
+  color: #c78120;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.read-important-paragraph {
+  display: block;
+  color: #896b3c;
+  font-size: 20px;
+  line-height: 1.65;
+}
+
 .read-rule-tip {
   padding: 10px 0;
   color: #8b99a8;
   font-size: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .read-button {
@@ -342,6 +373,7 @@
   background: #b7d7e9;
   font-size: 27px;
   line-height: 82px;
+  flex-shrink: 0;
 }
 
 .read-button-enabled {

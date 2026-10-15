@@ -40,6 +40,7 @@ export type ForceReadItem = {
   id: string
   title: string
   content: string[]
+  important?: boolean
 }
 
 export type ProductConfig = {
@@ -194,6 +195,7 @@ export const productConfig: ProductConfig = {
     {
       id: 'important',
       title: '重要提示',
+      important: true,
       content: [
         '本产品由诚安达保险销售服务股份有限公司销售，承保公司以具体方案为准。',
         '投保前请仔细阅读保险条款，特别是责任免除部分。',

@@ -184,9 +184,10 @@
   align-items: center;
   min-height: 104px;
   padding: 20px 24px;
+  border: 1px solid #f0d7a3;
   border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 10px 28px rgba(51,118,166,.08);
+  background: linear-gradient(110deg, #fff9ed, #fff2d9);
+  box-shadow: 0 10px 28px rgba(190,145,63,.1);
 }
 
 .notice-icon {
@@ -196,8 +197,8 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  color: #a3874b;
-  background: #f6eedb;
+  color: #fff;
+  background: #e8a334;
   font-size: 28px;
   font-weight: 700;
 }
@@ -217,12 +218,12 @@
 
 .notice-description {
   margin-top: 8px;
-  color: #8391a1;
+  color: #a97829;
   font-size: 20px;
 }
 
 .notice-arrow {
-  color: #a7b2bd;
+  color: #be9148;
   font-size: 34px;
 }
 

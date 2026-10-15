@@ -40,7 +40,7 @@ export default function MinePage() {
       content: '确定退出登录？',
       cancelText: '取消',
       confirmText: '确定',
-      confirmColor: '#2f80ed'
+      confirmColor: '#438ff5'
     })
 
     if (!result.confirm) return
@@ -71,7 +71,7 @@ export default function MinePage() {
         className='profile-hero'
         style={{ paddingTop: `${headerLayout.statusBarHeight + headerLayout.navigationHeight}px` }}
       >
-        <View className='mine-hero-heading'><Text>我的</Text><Text>正方形保险</Text></View>
+        <Text className='mine-hero-brand'>正方形保险</Text>
         <View className='mine-identity'>
           <View className='profile-avatar'>
             {profile.avatarUrl ? <Image className='profile-avatar-image' src={profile.avatarUrl} mode='aspectFill' /> : <Text>用</Text>}
@@ -85,7 +85,6 @@ export default function MinePage() {
       </View>
 
       <View className='mine-content'>
-        <View className='mine-section-heading'><Text>我的服务</Text><Text>便捷管理保障与售后</Text></View>
         <View className='service-shortcuts'>
           <View className='service-shortcut' onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}>
             <View className='service-shortcut-icon service-blue'>▤</View>
@@ -105,7 +104,7 @@ export default function MinePage() {
           </View>
         </View>
 
-        <View className='mine-section-heading mine-account-heading'><Text>账户与帮助</Text><Text>资料与服务支持</Text></View>
+        <View className='mine-account-heading'><Text>账户与帮助</Text><Text>资料与服务支持</Text></View>
         <View className='mine-menu'>
           <View className='mine-menu-row' onClick={() => Taro.navigateTo({ url: '/pages/profile/index' })}>
             <View className='mine-menu-icon menu-blue'>人</View>
