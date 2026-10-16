@@ -15,3 +15,21 @@ swiper,
 swiper-item {
   box-sizing: border-box;
 }
+
+.product-load-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 48px 32px;
+  gap: 28px;
+  color: #60738b;
+  text-align: center;
+  flex-direction: column;
+}
+
+.product-load-state button {
+  max-width: 100%;
+  color: #287cc7;
+  font-size: 28px;
+}

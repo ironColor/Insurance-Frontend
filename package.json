@@ -6,7 +6,8 @@
   "scripts": {
     "build:weapp": "taro build --type weapp",
     "dev:weapp": "npm run build:weapp -- --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:product": "node scripts/test-product.cjs"
   },
   "browserslist": [
     "last 3 versions",

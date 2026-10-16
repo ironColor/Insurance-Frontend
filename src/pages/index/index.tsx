@@ -1,92 +1,60 @@
-import { Button, Image, ScrollView, Swiper, SwiperItem, Text, Video, View } from '@tarojs/components'
+import { Button, Image, RichText, ScrollView, Swiper, SwiperItem, Text, Video, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import { useProductConfig } from '../../hooks/use-product'
+import type { ProductDocument } from '../../services/product'
+import { openProductDocument } from '../../services/product-document'
+import { buildProductUrl } from '../../services/product-entry'
 
 import './index.css'
 
-type Agreement = {
-  id: string
-  name: string
-  content: string
-}
-
-type IntroMedia =
-  | {
-      mode: 'video'
-      videoUrl: string
-      poster?: string
-    }
-  | {
-      mode: 'images'
-      images: string[]
-      interval: number
-    }
-
-type ProductIntroConfig = {
-  location: string
-  letterTitle: string
-  letterContent: string
-  media: IntroMedia
-  servicePhone: string
-  serviceTime: string
-  companySlogan: string
-  agreements: Agreement[]
-}
-
-// 后续接入「产品管理 - 介绍页配置」接口时，仅需替换这一份配置数据。
-const pageConfig: ProductIntroConfig = {
-  location: '河北省保定市竞秀区',
-  letterTitle: '致学生家长的一封信',
-  letterContent: '尊敬的学生家长：您好！',
-  media: {
-    mode: 'video',
-    videoUrl: ''
-  },
-  servicePhone: '400-xxx-xxxx',
-  serviceTime: '周一至周日 9:00 - 21:00',
-  companySlogan: '诚安达保险公司为您的孩子提供安心保障',
-  agreements: [
-    {
-      id: 'privacy',
-      name: '隐私政策',
-      content:
-        '我们重视并保护您的个人信息。为了向您提供保险产品介绍、投保及客户服务，我们会在取得授权后，按照合法、正当、必要和诚信的原则处理相关信息。未经您的授权，我们不会向无关第三方提供您的个人信息。'
-    },
-    {
-      id: 'service',
-      name: '客户服务协议',
-      content:
-        '使用本服务前，请您认真阅读并理解本协议。您确认后，即表示同意按照页面提示提供真实、准确、完整的信息，并遵守保险产品投保流程及相关服务规则。具体协议内容以后台配置为准。'
-    }
-  ]
-}
-
 export default function ProductIntroPage() {
+  const { config, loading, error, reload, shareUser } = useProductConfig()
   const [agreementAccepted, setAgreementAccepted] = useState(false)
-  const [activeAgreement, setActiveAgreement] = useState<Agreement | null>(null)
+  const [activeAgreement, setActiveAgreement] = useState<ProductDocument | null>(null)
   const [videoFailed, setVideoFailed] = useState(false)
   useDidShow(() => setAgreementAccepted(false))
+  useEffect(() => {
+    setVideoFailed(false)
+    setAgreementAccepted(false)
+    setActiveAgreement(null)
+  }, [config?.id])
 
-  const hasVideo = pageConfig.media.mode === 'video' && Boolean(pageConfig.media.videoUrl) && !videoFailed
-  const hasImages = pageConfig.media.mode === 'images' && pageConfig.media.images.length > 0
-
-  const toggleAgreement = () => {
-    const nextValue = !agreementAccepted
-    setAgreementAccepted(nextValue)
+  if (!config) {
+    return (
+      <View className='product-intro-state'>
+        <Text className='product-intro-state-title'>{loading ? '正在加载产品信息…' : '产品信息加载失败'}</Text>
+        {!loading && <Text>{error}</Text>}
+        {!loading && <Button onClick={reload}>重新加载</Button>}
+        {!loading && <Button onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>}
+      </View>
+    )
   }
 
+  const pageConfig = config.intro
+  const hasVideo = pageConfig.media.mode === 'video' && Boolean(pageConfig.media.videoUrl) && !videoFailed
+  const images = pageConfig.media.images || []
+  const hasImages = pageConfig.media.mode === 'images' && images.length > 0
+  const canStart = pageConfig.agreements.length === 0 || agreementAccepted
+
   const callService = () => {
-    if (!/^\d[\d-]+\d$/.test(pageConfig.servicePhone)) {
-      Taro.showToast({ title: '客服电话配置中', icon: 'none' })
+    const phoneNumber = config.servicePhone.replace(/[\s-]/g, '')
+    if (!/^\+?\d{5,20}$/.test(phoneNumber)) {
+      void Taro.showToast({ title: '暂未配置客服电话', icon: 'none' })
       return
     }
+    void Taro.makePhoneCall({ phoneNumber })
+  }
 
-    Taro.makePhoneCall({ phoneNumber: pageConfig.servicePhone.replace(/-/g, '') })
+  const showAgreement = (agreement: ProductDocument) => {
+    if (agreement.contentType === 'text') setActiveAgreement(agreement)
+    else void openProductDocument(agreement).catch(() => Taro.showToast({ title: '协议打开失败，请重试', icon: 'none' }))
   }
 
   const startInsuring = () => {
-    if (!agreementAccepted) return
-    Taro.navigateTo({ url: '/pages/plan/index' })
+    if (!canStart) return
+    void Taro.navigateTo({ url: buildProductUrl('/pages/plan/index', config.id, shareUser) })
   }
 
   return (
@@ -94,27 +62,22 @@ export default function ProductIntroPage() {
       <View className='custom-navigation'>
         <View className='navigation-safe-area' />
         <View className='location-bar'>
-          <View className='location-mark'>
-            <View className='location-dot' />
-          </View>
-          <Text className='location-name'>{pageConfig.location}</Text>
+          <View className='location-mark'><View className='location-dot' /></View>
+          <Text className='location-name'>{pageConfig.location || config.title}</Text>
         </View>
       </View>
 
       <View className='page-content'>
         <View className='letter-card'>
-          <View className='letter-decoration letter-decoration-left' />
-          <View className='letter-decoration letter-decoration-right' />
-          <Text className='letter-title'>{pageConfig.letterTitle}</Text>
-          <Text className='letter-content'>{pageConfig.letterContent}</Text>
+          <Text className='letter-title'>{pageConfig.letterTitle || config.title}</Text>
+          {pageConfig.letterContent && <RichText className='letter-content' nodes={pageConfig.letterContent} />}
         </View>
 
         <View className='media-card'>
-          {hasVideo && pageConfig.media.mode === 'video' ? (
+          {hasVideo ? (
             <Video
               className='intro-video'
-              src={pageConfig.media.videoUrl}
-              poster={pageConfig.media.poster}
+              src={pageConfig.media.videoUrl || ''}
               autoplay
               controls
               objectFit='cover'
@@ -123,105 +86,95 @@ export default function ProductIntroPage() {
               showCenterPlayBtn
               onError={() => setVideoFailed(true)}
             />
-          ) : hasImages && pageConfig.media.mode === 'images' ? (
+          ) : hasImages ? (
             <Swiper
               className='intro-swiper'
               circular
               autoplay
-              interval={pageConfig.media.interval}
+              interval={pageConfig.media.interval || 3000}
               indicatorDots
               indicatorColor='rgba(255, 255, 255, 0.45)'
               indicatorActiveColor='#ffffff'
             >
-              {pageConfig.media.images.map((imageUrl) => (
-                <SwiperItem key={imageUrl}>
-                  <Image className='intro-image' src={imageUrl} mode='aspectFill' />
+              {images.map((imageUrl, index) => (
+                <SwiperItem key={`${imageUrl}-${index}`}>
+                  <Image className='intro-image' src={imageUrl} mode='aspectFill' onClick={() => Taro.previewImage({ urls: images, current: imageUrl })} />
                 </SwiperItem>
               ))}
             </Swiper>
           ) : (
             <View className='media-placeholder'>
-              <View className='media-placeholder-shine' />
-              <Text className='media-placeholder-text'>{videoFailed ? '视频加载失败，请稍后重试' : '视频暂未配置'}</Text>
+              <Text className='media-placeholder-text'>{videoFailed ? '视频加载失败，请稍后重试' : '暂无产品介绍视频或图片'}</Text>
+              {videoFailed && <Text className='media-retry' onClick={() => setVideoFailed(false)}>重新加载视频</Text>}
             </View>
           )}
         </View>
 
-        <View className='service-card'>
-          <View className='service-row service-row-phone' onClick={callService}>
-            <View className='service-icon-wrap'>
-              <Text className='service-icon service-icon-phone'>☎</Text>
-            </View>
-            <View className='service-info'>
-              <Text className='service-label'>客服电话</Text>
-              <View className='service-value-row'>
-                <Text className='service-value service-phone'>{pageConfig.servicePhone}</Text>
-                <Text className='service-action'>· 点击可拨打</Text>
+        {(config.servicePhone || pageConfig.serviceTime) && (
+          <View className='service-card'>
+            {config.servicePhone && <View className='service-row service-row-phone' onClick={callService}>
+              <View className='service-icon-wrap'><Text className='service-icon service-icon-phone'>☎</Text></View>
+              <View className='service-info'>
+                <Text className='service-label'>客服电话</Text>
+                <View className='service-value-row'>
+                  <Text className='service-value service-phone'>{config.servicePhone}</Text>
+                  <Text className='service-action'>· 点击可拨打</Text>
+                </View>
               </View>
-            </View>
+            </View>}
+            {config.servicePhone && pageConfig.serviceTime && <View className='service-divider' />}
+            {pageConfig.serviceTime && <View className='service-row'>
+              <View className='service-icon-wrap'><Text className='service-icon'>◷</Text></View>
+              <View className='service-info'>
+                <Text className='service-label'>工作时间</Text>
+                <Text className='service-value'>{pageConfig.serviceTime}</Text>
+              </View>
+            </View>}
           </View>
+        )}
 
-          <View className='service-divider' />
-
-          <View className='service-row'>
-            <View className='service-icon-wrap'>
-              <Text className='service-icon'>◷</Text>
+        {(pageConfig.documents || []).length > 0 && <View className='product-documents'>
+          <Text className='product-documents-title'>产品资料</Text>
+          {(pageConfig.documents || []).map((document) => (
+            <View className='product-document-row' key={document.id} onClick={() => showAgreement(document)}>
+              <Text>{document.title}</Text>
+              <Text className='product-document-open'>查看 ›</Text>
             </View>
-            <View className='service-info'>
-              <Text className='service-label'>工作时间</Text>
-              <Text className='service-value'>{pageConfig.serviceTime}</Text>
-            </View>
-          </View>
-        </View>
-
+          ))}
+        </View>}
       </View>
 
       <View className='fixed-action-bar'>
-        <View className='agreement-area'>
-          <View
-            className={`agreement-checkbox ${agreementAccepted ? 'agreement-checkbox-checked' : ''}`}
-            onClick={toggleAgreement}
-          >
+        {pageConfig.agreements.length > 0 && <View className='agreement-area'>
+          <View className={`agreement-checkbox ${agreementAccepted ? 'agreement-checkbox-checked' : ''}`} onClick={() => setAgreementAccepted((value) => !value)}>
             {agreementAccepted && <Text className='agreement-checkmark'>✓</Text>}
           </View>
           <Text className='agreement-prefix'>我已阅读并同意</Text>
           <View className='agreement-links'>
             {pageConfig.agreements.map((agreement, index) => (
-              <Text
-                key={agreement.id}
-                className='agreement-link'
-                onClick={() => setActiveAgreement(agreement)}
-              >
-                《{agreement.name}》{index < pageConfig.agreements.length - 1 ? '、' : ''}
+              <Text key={agreement.id} className='agreement-link' onClick={() => showAgreement(agreement)}>
+                《{agreement.title}》{index < pageConfig.agreements.length - 1 ? '、' : ''}
               </Text>
             ))}
           </View>
-        </View>
-        <Button
-          className={`start-button ${agreementAccepted ? 'start-button-enabled' : ''}`}
-          disabled={!agreementAccepted}
-          onClick={startInsuring}
-        >
-          开始投保
-        </Button>
-        <Text className='company-slogan'>{pageConfig.companySlogan}</Text>
+        </View>}
+        <Button className={`start-button ${canStart ? 'start-button-enabled' : ''}`} disabled={!canStart} onClick={startInsuring}>开始投保</Button>
+        {pageConfig.companySlogan && <Text className='company-slogan'>{pageConfig.companySlogan}</Text>}
       </View>
 
       {activeAgreement && (
         <View className='agreement-modal-mask'>
           <View className='agreement-modal'>
             <View className='agreement-modal-header'>
-              <Text className='agreement-modal-title'>{activeAgreement.name}</Text>
-              <View className='agreement-modal-close' onClick={() => setActiveAgreement(null)}>
-                <Text>×</Text>
-              </View>
+              <Text className='agreement-modal-title'>{activeAgreement.title}</Text>
+              <View className='agreement-modal-close' onClick={() => setActiveAgreement(null)}><Text>×</Text></View>
             </View>
             <ScrollView className='agreement-modal-content' scrollY>
-              <Text className='agreement-modal-text'>{activeAgreement.content}</Text>
+              {activeAgreement.content.length > 0
+                ? activeAgreement.content.map((html, index) => <RichText key={index} className='agreement-modal-text' nodes={html} />)
+                : <Text className='agreement-modal-text'>协议正文暂未配置，请联系客服确认。</Text>}
             </ScrollView>
-            <Button className='agreement-modal-button' onClick={() => setActiveAgreement(null)}>
-              我知道了
-            </Button>
+            <Button className='agreement-modal-button' onClick={() => setActiveAgreement(null)}>我知道了</Button>
           </View>
         </View>
       )}

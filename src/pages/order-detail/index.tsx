@@ -2,7 +2,7 @@ import { Button, Text, View } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { useState } from 'react'
 
-import { getSelectedPlan, INSURANCE_ORDERS_KEY, OrderRecord, productConfig } from '../../services/product'
+import { getSelectedPlan, INSURANCE_ORDERS_KEY, isProductConfigSnapshot, OrderRecord } from '../../services/product'
 
 import './index.css'
 
@@ -17,16 +17,18 @@ export default function OrderDetailPage() {
 
   if (!order) return <View className='detail-empty'>未找到订单<Button onClick={() => Taro.navigateBack()}>返回订单列表</Button></View>
 
-  const selected = productConfig.products.flatMap((product) => {
+  const productConfig = isProductConfigSnapshot(order.productConfig) && (!order.productId || order.productConfig.id === order.productId) ? order.productConfig : null
+  const selected = productConfig?.products.flatMap((product) => {
     const plan = getSelectedPlan(product, order.selectedPlans)
     return plan ? [{ product, plan }] : []
-  })
+  }) || []
 
   return (
     <View className='order-detail-page'>
       <View className='order-detail-status'><Text>{order.status}</Text><Text>订单号 {order.id}</Text></View>
       <View className='order-detail-card'>
-        <Text className='order-detail-title'>已选保障方案</Text>
+        <Text className='order-detail-title'>{productConfig?.title || '原保障方案'}</Text>
+        {!productConfig && <Text>产品配置缺失，无法还原原保障方案，请联系客服核实。</Text>}
         {selected.map(({ product, plan }) => <View className='order-detail-plan' key={product.id}>
           <View className='order-detail-line prominent'><Text>{product.name} · {plan.name}</Text><Text>¥{plan.premium.toFixed(2)}</Text></View>
           <View className='order-detail-line'><Text>承保公司</Text><Text>{product.company}</Text></View>
@@ -35,7 +37,7 @@ export default function OrderDetailPage() {
           {plan.protections.map((item) => <View className='order-detail-line' key={item.name}><Text>{item.name}</Text><Text>{item.amount}</Text></View>)}
         </View>)}
       </View>
-      {productConfig.fieldGroups.map((group) => <View className='order-detail-card' key={group.id}>
+      {productConfig?.fieldGroups.map((group) => <View className='order-detail-card' key={group.id}>
         <Text className='order-detail-title'>{group.name}</Text>
         {group.fields.filter((field) => order.formValues[field.id]).map((field) => {
           const value = order.formValues[field.id]
@@ -50,7 +52,7 @@ export default function OrderDetailPage() {
         <View className='order-detail-line prominent'><Text>保费合计</Text><Text>¥{order.totalPremium.toFixed(2)}</Text></View>
       </View>
       {order.status === '已支付' && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/refund-apply/index?id=${encodeURIComponent(order.id)}` })}>申请退保</Button>}
-      {(order.status === '待支付' || order.status === '支付失败') && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/payment/index?id=${encodeURIComponent(order.id)}` })}>继续支付</Button>}
+      {productConfig && (order.status === '待支付' || order.status === '支付失败') && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/payment/index?id=${encodeURIComponent(order.id)}` })}>继续支付</Button>}
       {(order.status === '退款中' || order.status === '退款完成') && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/refund-status/index?id=${encodeURIComponent(order.id)}` })}>查看退款进度</Button>}
     </View>
   )

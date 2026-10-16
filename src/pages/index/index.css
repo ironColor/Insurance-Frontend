@@ -1,6 +1,7 @@
 .product-intro-page {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 270px;
   color: #253654;
   background:
     radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.74) 0, rgba(255, 255, 255, 0) 30%),
@@ -53,11 +54,11 @@
 }
 
 .page-content {
-  padding: 48px 30px 0;
+  flex: 1;
+  padding: 48px 30px;
 }
 
 .letter-card {
-  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 150px;
@@ -69,28 +70,7 @@
   box-shadow: 0 16px 40px rgba(54, 146, 198, 0.08);
 }
 
-.letter-decoration {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  opacity: 0.3;
-}
-
-.letter-decoration-left {
-  right: 36px;
-  bottom: -42px;
-  background: #bdeaff;
-}
-
-.letter-decoration-right {
-  top: -34px;
-  right: -24px;
-  border: 14px solid #8fd5f4;
-}
-
 .letter-title {
-  position: relative;
   color: #2486c8;
   font-size: 36px;
   font-weight: 700;
@@ -98,7 +78,9 @@
 }
 
 .letter-content {
-  position: relative;
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   margin-top: 30px;
   color: #506176;
   font-size: 24px;
@@ -123,24 +105,13 @@
 }
 
 .media-placeholder {
-  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   color: #ffffff;
   background: linear-gradient(180deg, #61656a 0%, #505357 58%, #181a1d 100%);
-}
-
-.media-placeholder-shine {
-  position: absolute;
-  top: -120px;
-  left: 80px;
-  width: 520px;
-  height: 220px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  filter: blur(12px);
 }
 
 .media-placeholder-text {
@@ -193,6 +164,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  min-width: 0;
 }
 
 .service-label {
@@ -205,6 +177,8 @@
   display: flex;
   align-items: center;
   margin-top: 4px;
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
 
 .service-value {
@@ -213,6 +187,7 @@
   font-size: 27px;
   font-weight: 600;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .service-phone {
@@ -275,7 +250,9 @@
 .agreement-links {
   display: flex;
   flex-wrap: wrap;
-  max-width: 380px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .agreement-link {
@@ -285,11 +262,9 @@
 }
 
 .fixed-action-bar {
-  position: fixed;
+  position: sticky;
   z-index: 20;
-  right: 0;
   bottom: 0;
-  left: 0;
   padding: 12px 42px calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, rgba(233, 249, 255, 0) 0%, rgba(233, 249, 255, 0.96) 22%, #e9f9ff 100%);
 }
@@ -357,28 +332,29 @@
 }
 
 .agreement-modal-header {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 106px;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 106px;
   border-bottom: 1px solid #edf1f5;
 }
 
 .agreement-modal-title {
+  flex: 1;
+  padding: 20px 0;
   color: #25364e;
   font-size: 32px;
   font-weight: 650;
 }
 
 .agreement-modal-close {
-  position: absolute;
-  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 56px;
   height: 56px;
+  flex-shrink: 0;
   color: #69788b;
   font-size: 44px;
 }
@@ -389,6 +365,9 @@
 }
 
 .agreement-modal-text {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   color: #536277;
   font-size: 27px;
   line-height: 1.9;
@@ -408,4 +387,67 @@
 
 .agreement-modal-button::after {
   display: none;
+}
+
+.product-intro-state {
+  display: flex;
+  min-height: 100vh;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 48px;
+  color: #64748b;
+  background: #eaf9ff;
+  font-size: 28px;
+  text-align: center;
+}
+
+.product-intro-state-title {
+  color: #253654;
+  font-size: 34px;
+  font-weight: 600;
+}
+
+.product-intro-state button {
+  width: 100%;
+  margin: 0;
+}
+
+.media-retry {
+  margin-top: 24px;
+  font-size: 24px;
+  text-decoration: underline;
+}
+
+.product-documents {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 36px;
+  padding: 28px;
+  border-radius: 24px;
+  background: #ffffff;
+}
+
+.product-documents-title {
+  color: #253654;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.product-document-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+  font-size: 25px;
+  overflow-wrap: anywhere;
+}
+
+.product-document-open {
+  flex-shrink: 0;
+  color: #288ee0;
 }

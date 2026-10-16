@@ -6,6 +6,7 @@ export default defineAppConfig({
     'pages/profile/index',
     'pages/avatar/index',
     'pages/index/index',
+    'pages/product-document/index',
     'pages/plan/index',
     'pages/insure/index',
     'pages/order-confirm/index',

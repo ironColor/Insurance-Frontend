@@ -50,7 +50,7 @@ export function hasProfileUserId(): boolean {
   return Boolean(getAuthSession()?.userId || getUserProfile().userId)
 }
 
-export async function fetchUserProfile(): Promise<UserProfile> {
+export async function fetchUserProfile(shouldApply: () => boolean = () => true): Promise<UserProfile> {
   const session = getAuthSession()
   const userId = session?.userId || getUserProfile().userId
   if (!session) throw new Error('请先登录')
@@ -66,8 +66,10 @@ export async function fetchUserProfile(): Promise<UserProfile> {
     phone: user.phonenumber || getUserProfile().phone,
     wxAccount: user.wxAccount || ''
   }
-  cacheUserProfile(profile)
-  if (!session.userId) saveAuthSession({ ...session, userId: profile.userId })
+  if (shouldApply()) {
+    cacheUserProfile(profile)
+    if (!session.userId) saveAuthSession({ ...session, userId: profile.userId })
+  }
   return profile
 }
 

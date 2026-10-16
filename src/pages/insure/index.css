@@ -15,6 +15,24 @@
   line-height: 1.6;
 }
 
+.insure-config-error {
+  display: flex;
+  margin-bottom: 22px;
+  padding: 24px;
+  gap: 12px;
+  border-radius: 16px;
+  color: #9c6221;
+  background: #fff4df;
+  font-size: 24px;
+  line-height: 1.7;
+  flex-direction: column;
+}
+
+.submit-insure-button[disabled] {
+  color: #fff;
+  background: #a9bfd0;
+}
+
 .form-section {
   margin-bottom: 22px;
   padding: 8px 26px;

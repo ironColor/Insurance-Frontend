@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import loginLogo from '../../assets/images/login-logo.jpg'
 import { loginWithWechat } from '../../services/auth'
 import { cachePhone, clearUserProfile, fetchUserProfile } from '../../services/profile'
+import { getLoginDestination } from '../../services/product-entry'
 import { hasAuthSession } from '../../services/session'
 
 import './index.css'
@@ -13,10 +14,17 @@ export default function LoginPage() {
   const [agreementAccepted, setAgreementAccepted] = useState(false)
   const [loggingIn, setLoggingIn] = useState(false)
   const loginPending = useRef(false)
+  const pageActive = useRef(true)
+  const loginSequence = useRef(0)
 
   useEffect(() => {
+    pageActive.current = true
     if (hasAuthSession()) {
-      Taro.reLaunch({ url: '/pages/home/index' })
+      Taro.reLaunch({ url: getLoginDestination() })
+    }
+    return () => {
+      pageActive.current = false
+      loginSequence.current += 1
     }
   }, [])
 
@@ -43,7 +51,7 @@ export default function LoginPage() {
       code?: string
     }
   }) => {
-    if (loginPending.current) return
+    if (!pageActive.current || loginPending.current) return
     if (!agreementAccepted) {
       remindAgreement()
       return
@@ -62,15 +70,20 @@ export default function LoginPage() {
 
     loginPending.current = true
     setLoggingIn(true)
+    const run = ++loginSequence.current
+    const isActiveRun = () => pageActive.current && loginSequence.current === run
 
     try {
       const result = await loginWithWechat(code)
+      if (!isActiveRun()) return
       clearUserProfile()
       cachePhone(result.phone, result.userId)
       if (result.userId) {
         try {
-          await fetchUserProfile()
+          await fetchUserProfile(isActiveRun)
+          if (!isActiveRun()) return
         } catch (error) {
+          if (!isActiveRun()) return
           console.error('获取用户资料失败', error)
         }
       }
@@ -80,17 +93,21 @@ export default function LoginPage() {
         icon: 'success',
         duration: 900
       })
+      if (!isActiveRun()) return
 
-      Taro.reLaunch({ url: '/pages/home/index' })
+      Taro.reLaunch({ url: getLoginDestination() })
     } catch (error) {
+      if (!isActiveRun()) return
       console.error('微信登录失败', error)
       Taro.showToast({
         title: error instanceof Error ? error.message : '登录失败，请稍后重试',
         icon: 'none'
       })
     } finally {
-      loginPending.current = false
-      setLoggingIn(false)
+      if (isActiveRun()) {
+        loginPending.current = false
+        setLoggingIn(false)
+      }
     }
   }
 

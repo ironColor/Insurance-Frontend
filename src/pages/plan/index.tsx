@@ -1,4 +1,4 @@
-import { Button, ScrollView, Text, View } from '@tarojs/components'
+import { Button, RichText, ScrollView, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 
@@ -7,35 +7,37 @@ import {
   createDefaultSelections,
   getSelectedPlan,
   INSURANCE_DRAFT_KEY,
+  InsuranceDraft,
   ProductItem,
   ProductPlan,
-  productConfig,
+  ProductConfig,
   SelectedPlanMap
 } from '../../services/product'
+
+import { useProductConfig } from '../../hooks/use-product'
+import { buildProductUrl } from '../../services/product-entry'
+import { openProductDocument } from '../../services/product-document'
 
 import './index.css'
 
 type DetailState = { product: ProductItem; plan: ProductPlan } | null
 
 export default function PlanPage() {
-  const [selections, setSelections] = useState<SelectedPlanMap>(createDefaultSelections)
+  const { config, loading, error, reload, shareUser } = useProductConfig()
+  if (!config) return <View className='plan-page product-load-state'><Text>{loading ? '正在加载产品方案…' : error || '未找到产品配置'}</Text>{!loading && <Button onClick={reload}>重新加载</Button>}</View>
+  return <PlanContent key={config.id} productConfig={config} shareUser={shareUser} />
+}
+
+function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfig; shareUser?: string }) {
+  const [selections, setSelections] = useState<SelectedPlanMap>(() => createDefaultSelections(productConfig))
   const [detail, setDetail] = useState<DetailState>(null)
+  const [morePlans, setMorePlans] = useState<ProductItem | null>(null)
   const [noticeVisible, setNoticeVisible] = useState(false)
   const [feeVisible, setFeeVisible] = useState(false)
-  const totalPremium = useMemo(() => calculatePremium(selections), [selections])
+  const totalPremium = useMemo(() => calculatePremium(productConfig, selections), [productConfig, selections])
 
   const choosePlan = (productId: string, planId: string | null) => {
     setSelections((current) => ({ ...current, [productId]: planId }))
-  }
-
-  const chooseMorePlan = async (product: ProductItem) => {
-    const extraPlans = product.plans.slice(2)
-    try {
-      const result = await Taro.showActionSheet({ itemList: extraPlans.map((plan) => plan.name) })
-      choosePlan(product.id, extraPlans[result.tapIndex].id)
-    } catch {
-      // 取消选择时保留当前方案。
-    }
   }
 
   const continueInsuring = async () => {
@@ -45,19 +47,25 @@ export default function PlanPage() {
       return
     }
 
+    if (!productConfig.products.some((product) => getSelectedPlan(product, selections))) {
+      Taro.showToast({ title: '请至少选择一项保障方案', icon: 'none' })
+      return
+    }
     const result = await Taro.showModal({
       title: '温馨提示',
-      content: '您即将进入投保流程，请准备好投保人与学生的身份信息。',
+      content: '您即将进入投保流程，请准备好投保人与被保险人的身份信息。',
       cancelText: '再看看',
       confirmText: '去填写',
       confirmColor: '#2d91e8'
     })
     if (!result.confirm) return
 
-    const savedDraft = Taro.getStorageSync<{ selectedPlans?: SelectedPlanMap; formValues?: Record<string, string> }>(INSURANCE_DRAFT_KEY)
-    const samePlans = productConfig.products.every((product) => savedDraft?.selectedPlans?.[product.id] === selections[product.id])
-    Taro.setStorageSync(INSURANCE_DRAFT_KEY, { selectedPlans: selections, totalPremium, formValues: samePlans ? savedDraft.formValues || {} : {} })
-    Taro.navigateTo({ url: '/pages/insure/index' })
+    const savedDraft = Taro.getStorageSync<InsuranceDraft>(INSURANCE_DRAFT_KEY)
+    const validSavedValues = savedDraft?.formValues && typeof savedDraft.formValues === 'object' && !Array.isArray(savedDraft.formValues) && Object.values(savedDraft.formValues).every((value) => typeof value === 'string')
+    const samePlans = validSavedValues && savedDraft?.productId === productConfig.id && productConfig.products.every((product) => savedDraft.selectedPlans?.[product.id] === selections[product.id])
+    const draft: InsuranceDraft = { productId: productConfig.id, productConfig, shareUser, selectedPlans: selections, totalPremium, formValues: samePlans ? savedDraft.formValues || {} : {} }
+    Taro.setStorageSync(INSURANCE_DRAFT_KEY, draft)
+    Taro.navigateTo({ url: buildProductUrl('/pages/insure/index', productConfig.id, shareUser) })
   }
 
   return (
@@ -93,7 +101,7 @@ export default function PlanPage() {
                     <Text>{plan.name}</Text>
                   </View>
                 ))}
-                {product.plans.length > 2 && <View className={`plan-tab ${selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? 'plan-tab-active' : ''}`} onClick={() => chooseMorePlan(product)}><Text>{selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? selectedPlan.name : '更多方案'}</Text></View>}
+                {product.plans.length > 2 && <View className={`plan-tab ${selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? 'plan-tab-active' : ''}`} onClick={() => setMorePlans(product)}><Text>{selectedPlan && !product.plans.slice(0, 2).some((plan) => plan.id === selectedPlan.id) ? selectedPlan.name : '更多方案'}</Text></View>}
               </View>
 
               {selectedPlan ? (
@@ -115,19 +123,19 @@ export default function PlanPage() {
           )
         })}
 
-        <View className='notice-card' onClick={() => setNoticeVisible(true)}>
+        {productConfig.forceRead.length > 0 && <View className='notice-card' onClick={() => setNoticeVisible(true)}>
           <View className='notice-icon'>!</View>
           <View className='notice-copy'>
             <Text className='notice-title'>投保须知</Text>
-            <Text className='notice-description'>更多请查看《学平险投保须知》</Text>
+            <Text className='notice-description'>查看本产品投保须知与阅读文件</Text>
           </View>
           <Text className='notice-arrow'>›</Text>
-        </View>
+        </View>}
 
-        <View className='service-line'>
+        {productConfig.servicePhone && <View className='service-line'>
           <Text>保险顾问服务热线：</Text>
-          <Text className='service-phone' onClick={() => Taro.makePhoneCall({ phoneNumber: productConfig.servicePhone })}>400-800-0000</Text>
-        </View>
+          <Text className='service-phone' onClick={() => Taro.makePhoneCall({ phoneNumber: productConfig.servicePhone })}>{productConfig.servicePhone}</Text>
+        </View>}
       </View>
 
       <View className='plan-action-bar'>
@@ -137,6 +145,15 @@ export default function PlanPage() {
         </View>
         <Button className='insure-now-button' onClick={continueInsuring}>立即投保</Button>
       </View>
+
+      {morePlans && <View className='sheet-mask' onClick={() => setMorePlans(null)}>
+        <View className='detail-sheet' onClick={(event) => event.stopPropagation()}>
+          <View className='sheet-header'><Text className='sheet-title'>{morePlans.name} · 更多方案</Text><View className='sheet-close' onClick={() => setMorePlans(null)}>×</View></View>
+          <ScrollView className='sheet-content' scrollY>
+            {morePlans.plans.slice(2).map((plan) => <Button key={plan.id} className='extra-plan-option' onClick={() => { choosePlan(morePlans.id, plan.id); setMorePlans(null) }}><Text>{plan.name}</Text><Text>¥{plan.premium.toFixed(2)}</Text></Button>)}
+          </ScrollView>
+        </View>
+      </View>}
 
       {detail && (
         <View className='sheet-mask' onClick={() => setDetail(null)}>
@@ -149,11 +166,11 @@ export default function PlanPage() {
               <View className='sheet-close' onClick={() => setDetail(null)}>×</View>
             </View>
             <ScrollView className='sheet-content' scrollY>
-              <Text className='detail-summary'>{detail.plan.description}</Text>
+              <RichText className='detail-summary' nodes={detail.plan.description} />
               {detail.plan.protections.map((item) => (
                 <View className='detail-item' key={item.name}>
                   <View className='detail-item-heading'><Text>{item.name}</Text><Text>{item.amount}</Text></View>
-                  <Text className='detail-item-text'>{item.description}</Text>
+                  <RichText className='detail-item-text' nodes={item.description} />
                 </View>
               ))}
             </ScrollView>
@@ -182,16 +199,14 @@ export default function PlanPage() {
         <View className='sheet-mask' onClick={() => setNoticeVisible(false)}>
           <View className='detail-sheet notice-sheet' onClick={(event) => event.stopPropagation()}>
             <View className='sheet-header'>
-              <Text className='sheet-title'>学平险投保须知</Text>
+              <Text className='sheet-title'>投保须知</Text>
               <View className='sheet-close' onClick={() => setNoticeVisible(false)}>×</View>
             </View>
             <ScrollView className='sheet-content' scrollY>
-              <Text className='notice-section-title'>一、投保范围</Text>
-              <Text className='notice-paragraph'>凡身体健康、能正常学习和生活的在校学生均可投保。</Text>
-              <Text className='notice-section-title'>二、重要说明</Text>
-              <Text className='notice-paragraph'>请如实填写投保信息。具体保险责任、责任免除、等待期及理赔要求以正式保险条款和保单为准。</Text>
-              <Text className='notice-section-title'>三、信息保护</Text>
-              <Text className='notice-paragraph'>身份信息仅用于投保、承保、理赔与客户服务，并按照法律法规要求进行保护。</Text>
+              {productConfig.forceRead.map((document) => <View key={document.id}>
+                <Text className='notice-section-title'>{document.title}</Text>
+                {document.contentType === 'text' ? document.content.map((content, index) => <RichText className='notice-paragraph' key={index} nodes={content} />) : <Button onClick={() => void openProductDocument(document).catch(() => undefined)}>查看文件</Button>}
+              </View>)}
             </ScrollView>
             <Button className='sheet-button' onClick={() => setNoticeVisible(false)}>我知道了</Button>
           </View>
