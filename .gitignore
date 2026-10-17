@@ -6,3 +6,5 @@ dist/
 .env.local
 .env.*.local
 project.private.config.json
+*.test.ts
+*.cjs
