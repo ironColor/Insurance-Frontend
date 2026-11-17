@@ -1,41 +1,50 @@
 import { Button, Text, Textarea, View } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
-import { useState } from 'react'
-
-import { INSURANCE_ORDERS_KEY, OrderRecord } from '../../services/product'
-
+import Taro from '@tarojs/taro'
+import { useRef, useState } from 'react'
+import { useOrder } from '../../hooks/use-order'
+import { applyRefund, fetchOrder, message, money } from '../../services/order'
+import { useOrderLifecycle } from '../../hooks/use-order-lifecycle'
+import { beginOrderAction, orderActionBlockReason, pendingBlockReason } from '../../services/order-safety'
 import './index.css'
 
-const reasons = ['个人经济压力，无力续保', '保障方案不符合预期', '已选购其他保险产品', '短期不需要该保障', '对服务不满意', '其他']
-
 export default function RefundApplyPage() {
-  const [order, setOrder] = useState<OrderRecord | null>(null)
-  const [reason, setReason] = useState('')
-  const [accepted, setAccepted] = useState(false)
+  const { order, loading, error, reload } = useOrder()
   const [remark, setRemark] = useState('')
-  useLoad((options) => {
-    const orders = Taro.getStorageSync<OrderRecord[]>(INSURANCE_ORDERS_KEY) || []
-    setOrder(orders.find((item) => item.id === options.id && item.status === '已支付') || null)
-  })
-
-  const submit = () => {
-    if (!reason) return Taro.showToast({ title: '请选择退保原因', icon: 'none' })
-    if (!accepted) return Taro.showToast({ title: '请先阅读并确认退款风险', icon: 'none' })
-    Taro.showToast({ title: '退保申请暂不可提交', icon: 'none' })
+  const [accepted, setAccepted] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState('')
+  const lock = useRef(false)
+  const lifecycle = useOrderLifecycle()
+  const blockReason = order ? orderActionBlockReason(order, 'refund') || pendingBlockReason(order.orderNo, 'refund') : ''
+  const submit = async () => {
+    const isActive = lifecycle.capture()
+    if (!isActive() || !order || !accepted || lock.current) return
+    if (blockReason) { setResult(blockReason); return }
+    lock.current = true; setBusy(true)
+    try {
+      const latest = await fetchOrder(order.orderNo)
+      if (!isActive()) return
+      const reason = orderActionBlockReason(latest, 'refund') || pendingBlockReason(order.orderNo, 'refund')
+      if (reason) throw new Error(reason)
+      if (latest.policyEffectiveDate && Number.isFinite(Date.parse(latest.policyEffectiveDate)) && Date.parse(latest.policyEffectiveDate) <= Date.now()) throw new Error('保单已生效，不符合文档所述退款条件')
+      const answer = await Taro.showModal({ title: '确认申请退款', content: '仅已支付且未超过保单生效时间的订单支持申请，资格和退款金额由服务端审核。确定提交？' })
+      if (!isActive() || !answer.confirm) return
+      beginOrderAction(order.orderNo, 'refund')
+      await applyRefund(order.orderNo, remark.trim())
+      if (!isActive()) return
+      await Taro.redirectTo({ url: `/pages/refund-status/index?orderNo=${encodeURIComponent(order.orderNo)}` })
+    } catch (error) { if (isActive()) setResult(`${message(error)}。若已提交，请先查询退款记录，不要重复申请。`) }
+    finally { if (isActive()) { lock.current = false; setBusy(false) } }
   }
-
-  if (!order) return <View className='refund-empty'>该订单当前不可申请退保<Button onClick={() => Taro.navigateBack()}>返回</Button></View>
-
-  return (
-    <View className='refund-page'>
-      <View className='refund-card refund-amount'><Text>可退金额</Text><Text>待核算</Text><Text>最终金额以正式退保审核结果为准</Text></View>
-      <View className='refund-card'><Text className='refund-heading'>订单信息</Text><View className='refund-line'><Text>订单号</Text><Text>{order.id}</Text></View><View className='refund-line'><Text>已缴保费</Text><Text>¥{order.totalPremium.toFixed(2)}</Text></View></View>
-      <View className='refund-card'><Text className='refund-heading'>退保原因</Text>{reasons.map((item) => <View className='refund-choice' key={item} onClick={() => setReason(item)}><Text>{item}</Text><Text className={reason === item ? 'refund-radio selected' : 'refund-radio'}>{reason === item ? '✓' : ''}</Text></View>)}</View>
-      <View className='refund-card'><Text className='refund-heading'>退款收款账户</Text><View className='refund-line'><Text>原路返回</Text><Text>原支付账户</Text></View></View>
-      <View className='refund-card'><Text className='refund-heading'>备注说明（选填）</Text><Textarea maxlength={200} placeholder='可填写补充说明' value={remark} onInput={(event) => setRemark(event.detail.value)} /><Text className='refund-count'>{remark.length}/200</Text></View>
-      <View className='refund-risk'>犹豫期后退保可能按保单现金价值计算，产生保费损失；保障也将按正式规则终止。具体金额与生效时间以审核结果为准。</View>
-      <View className='refund-agree' onClick={() => setAccepted(!accepted)}><Text className={accepted ? 'refund-checkbox selected' : 'refund-checkbox'}>{accepted ? '✓' : ''}</Text><Text>本人已阅读并知晓以上退款风险，自愿申请退保</Text></View>
-      <Button className='refund-submit' onClick={submit}>提交退款申请</Button>
-    </View>
-  )
+  if (!order) return <View className='refund-empty'>{loading ? '正在查询订单' : error}<Button disabled={loading} onClick={reload}>重新查询</Button></View>
+  return <View className='refund-page'>
+    <View className='refund-card'><Text>订单号：{order.orderNo}</Text><View>原订单实付：{money(order.payAmount)}</View><View>可退金额由服务端审核，不按本地保费推算</View></View>
+    <View className='refund-card'><Text>申请说明（选填，以备注提交）</Text><Textarea maxlength={200} value={remark} placeholder='请描述退款原因' onInput={event => setRemark(event.detail.value)} /><View>原因字典尚未提供，不提交虚构原因编码。</View></View>
+    <View className='refund-risk'>仅已支付且未超过保单生效时间可申请。申请受理不代表退款成功，实际进度及到账金额以服务端和支付账户为准。</View>
+    <Button disabled={busy} onClick={() => setAccepted(!accepted)}>{accepted ? '✓ 已确认' : '阅读并确认退款风险'}</Button>
+    {result && <View>{result}</View>}
+    {blockReason && <View>{blockReason}</View>}
+    <Button disabled={busy || !accepted || !!blockReason} loading={busy} onClick={submit}>提交退款申请</Button>
+    <Button disabled={busy} onClick={() => Taro.navigateTo({ url: `/pages/refund-status/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>查询退款记录</Button>
+  </View>
 }

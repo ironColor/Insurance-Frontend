@@ -1,0 +1,339 @@
+{
+  "auth": {
+    "http_status": 200,
+    "business_code": 500,
+    "success": false,
+    "说明": "密码输入错误1次"
+  },
+  "results": [
+    {
+      "path": "/product",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/plan",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/media",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/forceDoc",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/doc",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/block",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/editStatus",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/editAll",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/insCompany",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/insCompany",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/insCompany/editStatus",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/doc",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/doc",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/banner",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/banner",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/banner/editStatus",
+      "method": "PUT",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}/qrcode",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/addAll",
+      "method": "POST",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/product/{productId}",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/{productId}/orderStatic",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/{productId}/orderList",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/{productId}/exportOrder",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/{orderId}/orderInfo",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/productList",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/product/list",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/insCompany/{insCompanyId}",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/insCompany/list",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/insCompany/companyList",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/doc/{docId}",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/doc/docList",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/banner/{bannerId}",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/banner/list",
+      "method": "GET",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "未获得登录令牌，未执行",
+      "说明": "用户提供密码被服务端拒绝；未重复登录"
+    },
+    {
+      "path": "/insCompany/{insCompanyIds}",
+      "method": "DELETE",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/doc/{docIds}",
+      "method": "DELETE",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    },
+    {
+      "path": "/banner/{bannerIds}",
+      "method": "DELETE",
+      "http_status": null,
+      "business_code": null,
+      "row_count": 0,
+      "classification": "写接口未执行",
+      "说明": "自动审批拒绝生产写接口探测；未发送请求"
+    }
+  ],
+  "total_operations": 36,
+  "classification_counts": {
+    "写接口未执行": 22,
+    "未获得登录令牌，未执行": 14
+  }
+}

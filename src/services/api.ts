@@ -26,7 +26,7 @@ export function unwrapResponse<T>(body: ApiResponse<T> | string, statusCode: num
     if (statusCode === 401 || statusCode === 403) clearAuthSession()
     throw new ApiError('服务返回内容异常', undefined, statusCode)
   }
-  if (statusCode === 401 || statusCode === 403 || (typeof body !== 'string' && body.code === 401)) {
+  if (statusCode === 401 || statusCode === 403 || (typeof body !== 'string' && (body.code === 401 || body.code === 403))) {
     clearAuthSession()
     throw new ApiError(typeof body === 'string' ? body || '登录已失效，请重新登录' : body.msg || '登录已失效，请重新登录', typeof body === 'string' ? undefined : body.code, statusCode)
   }
@@ -38,7 +38,8 @@ export function unwrapResponse<T>(body: ApiResponse<T> | string, statusCode: num
   return body.data as T
 }
 
-export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT', data?: object): Promise<T> {
+/** raw preserves the documented bare array / table and business-validation envelopes. */
+export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT', data?: object, shape: 'data' | 'raw' | 'validation' = 'data'): Promise<T> {
   const session = getAuthSession()
   const response = await Taro.request<string>({
     url: `${API_BASE_URL}${path}`,
@@ -59,6 +60,14 @@ export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT'
     } catch {
       // 非 JSON 错误响应仍交由统一响应处理显示。
     }
+  }
+  if (shape !== 'data') {
+    if (response.statusCode < 200 || response.statusCode >= 300 || (body && typeof body === 'object' && (body.code === 401 || body.code === 403))) {
+      return unwrapResponse(body, response.statusCode)
+    }
+    if (!body || typeof body !== 'object') throw new ApiError('服务返回内容异常')
+    if (shape === 'raw' && !Array.isArray(body) && body.code !== undefined && body.code !== 200) throw new ApiError(body.msg || '服务请求失败', body.code, response.statusCode)
+    return body as T
   }
   return unwrapResponse(body, response.statusCode)
 }

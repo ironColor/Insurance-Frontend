@@ -8,3 +8,4 @@ dist/
 project.private.config.json
 *.test.ts
 *.cjs
+!scripts/test-order.cjs

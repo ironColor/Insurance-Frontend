@@ -1,39 +1,18 @@
 import { Button, Text, View } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
-import { useState } from 'react'
-
-import { INSURANCE_ORDERS_KEY, OrderRecord } from '../../services/product'
-
+import Taro, { useRouter } from '@tarojs/taro'
+import { useOrder } from '../../hooks/use-order'
+import { money, orderStatus } from '../../services/order'
 import './index.css'
 
 export default function PayResultPage() {
-  const [order, setOrder] = useState<OrderRecord | null>(null)
-  const [status, setStatus] = useState<'success' | 'failed' | 'unknown'>('unknown')
-
-  useLoad((options) => {
-    const orders = Taro.getStorageSync<OrderRecord[]>(INSURANCE_ORDERS_KEY) || []
-    const matched = orders.find((item) => item.id === options.id)
-    setOrder(matched || null)
-    setStatus(matched?.status === '已支付' ? 'success' : matched?.status === '支付失败' ? 'failed' : 'unknown')
-  })
-
-  const success = status === 'success'
-  const unknown = status === 'unknown'
-
-  return (
-    <View className='result-page'>
-      <View className={`result-icon ${success ? 'result-success' : 'result-failed'}`}>{success ? '✓' : '?'}</View>
-      <Text className='result-title'>{success ? '支付成功' : unknown ? '支付结果待确认' : '支付失败'}</Text>
-      <Text className='result-description'>{success ? '订单已支付完成。' : unknown ? '暂未查询到明确的支付结果，请从订单列表查看最新状态。' : '本次支付未完成，请查询订单状态后重试。'}</Text>
-      {order && <View className='result-card'>
-        <View className='result-row'><Text>订单编号</Text><Text>{order?.id || '生成中'}</Text></View>
-        <View className='result-row'><Text>订单金额</Text><Text>¥{order?.totalPremium.toFixed(2) || '0.00'}</Text></View>
-        <View className='result-row'><Text>支付方式</Text><Text>微信支付</Text></View>
-        <View className='result-row'><Text>{success ? '支付时间' : '创建时间'}</Text><Text>{order?.paidAt || order?.createdAt || '-'}</Text></View>
-        <View className='result-row'><Text>被保险人</Text><Text>{order?.formValues['student-name'] || '-'}</Text></View>
-      </View>}
-      <Button className='result-primary' onClick={() => Taro.redirectTo({ url: '/pages/orders/index' })}>查看我的订单</Button>
-      <Button className='result-secondary' onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>
-    </View>
-  )
+  const { order, loading, error, reload } = useOrder()
+  const outcome = useRouter().params.outcome
+  return <View className='result-page'>
+    <View className='result-icon'>?</View><Text className='result-title'>支付结果核对</Text>
+    <Text className='result-description'>{outcome === 'cancelled' ? '已取消微信支付操作；订单是否支付以服务端为准。' : '支付客户端结果不代表到账；请核对服务端订单。状态字典尚未提供，不自动判定支付成功。'}</Text>
+    {loading && <View>正在查询…</View>}{error && <View>{error}</View>}
+    {order && <View className='result-card'><View>订单号：{order.orderNo}</View><View>{orderStatus(order)}</View><View>订单金额：{money(order.totalAmount)}</View><View>实付金额：{money(order.payAmount)}</View><View>支付时间：{order.payTime || '未返回'}</View></View>}
+    <Button disabled={loading} onClick={reload}>重新查询结果</Button>
+    <Button onClick={() => Taro.redirectTo({ url: '/pages/orders/index' })}>查看我的订单</Button>
+  </View>
 }

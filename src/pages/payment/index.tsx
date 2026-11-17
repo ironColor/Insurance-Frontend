@@ -1,69 +1,80 @@
 import { Button, Text, View } from '@tarojs/components'
-import Taro, { useLoad, useRouter } from '@tarojs/taro'
-import { useMemo, useState } from 'react'
-
-import { calculatePremium, getSelectedPlan, INSURANCE_DRAFT_KEY, INSURANCE_ORDERS_KEY, InsuranceDraft, isProductConfigSnapshot, OrderRecord } from '../../services/product'
-import { decodeEntryValue } from '../../services/product-entry'
-
+import Taro, { useDidShow, useRouter } from '@tarojs/taro'
+import { useRef, useState } from 'react'
+import { fetchChannels, fetchOrder, fetchOrderById, invokePayment, message, money, PayChannel, prepay, ServerOrder } from '../../services/order'
+import { useOrderLifecycle } from '../../hooks/use-order-lifecycle'
+import { beginOrderAction, orderActionBlockReason, pendingBlockReason } from '../../services/order-safety'
 import './index.css'
 
 export default function PaymentPage() {
-  const productId = decodeEntryValue(useRouter().params.productId)
-  const [order, setOrder] = useState<OrderRecord | null>(null)
-  const [draft, setDraft] = useState<InsuranceDraft | null>(null)
-  const [fromOrder, setFromOrder] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-
-  useLoad((options) => {
-    setLoaded(true)
-    setFromOrder(Boolean(options.id))
-    if (options.id) {
-      const orders = Taro.getStorageSync<OrderRecord[]>(INSURANCE_ORDERS_KEY) || []
-      setOrder(orders.find((item) => item.id === options.id) || null)
-    } else {
-      const storedDraft = Taro.getStorageSync<InsuranceDraft>(INSURANCE_DRAFT_KEY) || null
-      if (!productId || storedDraft?.productId !== productId || !isProductConfigSnapshot(storedDraft.productConfig) || storedDraft.productConfig.id !== productId) {
-        void Taro.reLaunch({
-          url: '/pages/home/index',
-          success: () => { void Taro.showToast({ title: '产品信息已失效，请重新选择', icon: 'none' }) }
-        })
-        return
-      }
-      setDraft(storedDraft)
+  const params = useRouter().params
+  const [order, setOrder] = useState<ServerOrder | null>(null)
+  const [channels, setChannels] = useState<PayChannel[]>([])
+  const [channel, setChannel] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const lock = useRef(false)
+  const lifecycle = useOrderLifecycle()
+  const sequence = useRef(0)
+  const blockReason = order ? orderActionBlockReason(order, 'pay') || pendingBlockReason(order.orderNo, 'pay') : ''
+  const load = async () => {
+    const alive = lifecycle.capture()
+    if (!alive()) return
+    const ticket = ++sequence.current
+    const isActive = () => alive() && ticket === sequence.current
+    setError(''); setOrder(null); setChannels([]); setChannel('')
+    if (!params.orderNo && !params.id) {
+      setError('暂不能创建新订单：最新接口仅定义 orderData 为字符串，尚未提供投保字段与方案的序列化结构。请联系服务方确认，当前不会提交猜测数据或扣款。')
+      return
     }
-  })
-
-  const snapshot = fromOrder ? order?.productConfig : draft?.productConfig
-  const productConfig = isProductConfigSnapshot(snapshot) && (fromOrder ? !order?.productId || snapshot.id === order.productId : Boolean(productId && draft?.productId === productId && snapshot.id === productId)) ? snapshot : null
-  const selections = (fromOrder ? order?.selectedPlans : draft?.selectedPlans) || {}
-  const amount = fromOrder ? order?.totalPremium : draft?.totalPremium
-  const selectedPlans = useMemo(() => {
-    if (!productConfig || typeof selections !== 'object' || Array.isArray(selections) || typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) return []
-    const selectedIds = Object.keys(selections).filter((id) => selections[id] != null)
-    if (!selectedIds.length || selectedIds.some((id) => !productConfig.products.some((product) => product.id === id))) return []
     try {
-      const totalPremium = calculatePremium(productConfig, selections)
-      if (!Number.isSafeInteger(Math.round(amount * 100)) || Math.round(amount * 100) !== Math.round(totalPremium * 100)) return []
-      return productConfig.products.flatMap((product) => {
-        const plan = getSelectedPlan(product, selections)
-        return plan ? [{ product, plan }] : []
-      })
-    } catch {
-      return []
-    }
-  }, [amount, productConfig, selections])
-
-  if (!loaded) return <View className='payment-empty'>正在读取支付信息</View>
-  if (fromOrder && !order) return <View className='payment-empty'>未找到待支付订单<Button onClick={() => Taro.redirectTo({ url: '/pages/orders/index' })}>返回订单列表</Button></View>
-  if (order && order.status !== '待支付' && order.status !== '支付失败') return <View className='payment-empty'>当前订单无需再次支付<Button onClick={() => Taro.navigateBack()}>返回订单详情</Button></View>
-  if (!productConfig) return <View className='payment-empty'>{fromOrder ? '订单产品配置缺失，暂时无法支付' : '产品信息已失效，请重新选择产品'}<Button onClick={() => fromOrder ? Taro.redirectTo({ url: '/pages/orders/index' }) : Taro.reLaunch({ url: '/pages/home/index' })}>{fromOrder ? '返回订单列表' : '返回首页'}</Button></View>
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || selectedPlans.length === 0) return <View className='payment-empty'>保费或保障方案已失效，请重新选择产品<Button onClick={() => fromOrder ? Taro.redirectTo({ url: '/pages/orders/index' }) : Taro.reLaunch({ url: '/pages/home/index' })}>{fromOrder ? '返回订单列表' : '返回首页'}</Button></View>
-
+      const value = params.orderNo ? await fetchOrder(params.orderNo) : await fetchOrderById(params.id!)
+      if (!isActive()) return
+      setOrder(value)
+      if (value.productId == null) throw new Error('订单未返回产品标识')
+      const available = await fetchChannels(value.productId)
+      if (isActive()) setChannels(available)
+    } catch (error) { if (isActive()) setError(message(error)) }
+  }
+  useDidShow(() => { if (!lock.current) void load() })
+  const pay = async () => {
+    const isActive = lifecycle.capture()
+    if (!isActive() || !order || !channel || lock.current) return
+    if (blockReason) { setError(blockReason); return }
+    lock.current = true; setBusy(true); setError('')
+    let orderNo = order.orderNo
+    try {
+      const latest = await fetchOrder(orderNo)
+      if (!isActive()) return
+      setOrder(latest)
+      const reason = orderActionBlockReason(latest, 'pay') || pendingBlockReason(orderNo, 'pay')
+      if (reason) throw new Error(reason)
+      if (latest.expireTime && Number.isFinite(Date.parse(latest.expireTime)) && Date.parse(latest.expireTime) <= Date.now()) throw new Error('订单已超过服务端有效期')
+      if (typeof latest.totalAmount !== 'number' || !Number.isFinite(latest.totalAmount) || latest.totalAmount < 0) throw new Error('服务端未返回有效订单金额')
+      if (latest.discountAmount != null && latest.discountAmount !== 0) throw new Error('该订单含优惠，文档尚未明确最终应付字段，请联系客服核实后支付')
+      // Once prepay may have reached the server, do not blindly retry an uncertain write.
+      beginOrderAction(orderNo, 'pay')
+      const result = await prepay({ orderId: latest.orderId, orderNo, productId: latest.productId, amount: latest.totalAmount, subject: latest.productName || latest.productTitle || `订单 ${orderNo}`, orderData: latest.orderData, channel, method: '4' }, async content => {
+        if (!isActive()) return false
+        const answer = await Taro.showModal({ title: '投保业务提示', content, confirmText: '继续支付' })
+        return isActive() && answer.confirm
+      }, isActive)
+      if (!isActive() || !result) return
+      if (result.orderNo && result.orderNo !== orderNo) throw new Error('预支付订单号与当前订单不一致，已停止调用微信支付')
+      orderNo = result.orderNo || orderNo
+      const outcome = await invokePayment(result)
+      if (!isActive()) return
+      await Taro.redirectTo({ url: `/pages/pay-result/index?orderNo=${encodeURIComponent(orderNo)}&outcome=${outcome}` })
+    } catch (error) { if (isActive()) setError(`${message(error)}。请先查询订单确认结果，不要重复提交。`) }
+    finally { if (isActive()) { lock.current = false; setBusy(false) } }
+  }
   return <View className='payment-page'>
-    <View className='payment-amount'><Text>应付金额</Text><Text>¥{amount.toFixed(2)}</Text></View>
-    <View className='payment-card'><Text className='payment-heading'>{productConfig.title}</Text>{order && <View className='payment-row'><Text>订单号</Text><Text>{order.id}</Text></View>}{selectedPlans.map(({ product, plan }) => <View className='payment-row' key={product.id}><Text>{product.name} · {plan.name}</Text><Text>¥{plan.premium.toFixed(2)}</Text></View>)}</View>
-    <View className='payment-card'><Text className='payment-heading'>付款方式</Text><View className='payment-row'><Text>微信支付</Text><Text>✓</Text></View></View>
-    <Text className='payment-tip'>请核对订单与金额后再支付。</Text>
-    <Button className='payment-button' onClick={() => Taro.showToast({ title: '支付暂不可用，请稍后再试', icon: 'none' })}>确认支付</Button>
+    {error && <View className='payment-card'>{error}</View>}
+    {order && <><View className='payment-amount'><Text>服务端订单金额</Text><Text>{money(order.totalAmount)}</Text></View><View className='payment-card'>订单号：{order.orderNo}</View>
+      <View className='payment-card'><Text>请选择服务端支付渠道（小程序支付）</Text>{channels.map(item => <Button key={String(item.id)} disabled={busy} onClick={() => setChannel(String(item.id))}>{channel === String(item.id) ? '✓ ' : ''}{item.name || item.code || item.id}</Button>)}{!channels.length && <Text>暂无可用渠道</Text>}</View>
+      <Text>微信支付回调不代表订单已到账，完成后将查询服务端结果。</Text>
+      {blockReason && <View>{blockReason}</View>}
+      <Button disabled={busy || !channel || !!blockReason} loading={busy} onClick={pay}>校验并支付</Button></>}
+    <Button disabled={busy} onClick={() => Taro.redirectTo({ url: '/pages/orders/index' })}>查询我的订单</Button>
   </View>
 }

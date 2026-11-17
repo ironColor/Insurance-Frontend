@@ -1,59 +1,53 @@
 import { Button, Text, View } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
-import { useState } from 'react'
-
-import { getSelectedPlan, INSURANCE_ORDERS_KEY, isProductConfigSnapshot, OrderRecord } from '../../services/product'
-
+import Taro from '@tarojs/taro'
+import { useRef, useState } from 'react'
+import { useOrder } from '../../hooks/use-order'
+import { cancelOrder, fetchOrder, message, money, orderStatus } from '../../services/order'
+import { useOrderLifecycle } from '../../hooks/use-order-lifecycle'
+import { beginOrderAction, orderActionBlockReason, pendingBlockReason } from '../../services/order-safety'
 import './index.css'
 
-const mask = (value: string, start: number, end: number) => value.length > start + end ? `${value.slice(0, start)}${'*'.repeat(value.length - start - end)}${value.slice(-end)}` : value
-
 export default function OrderDetailPage() {
-  const [order, setOrder] = useState<OrderRecord | null>(null)
-  useLoad((options) => {
-    const orders = Taro.getStorageSync<OrderRecord[]>(INSURANCE_ORDERS_KEY) || []
-    setOrder(orders.find((item) => item.id === options.id) || null)
-  })
-
-  if (!order) return <View className='detail-empty'>未找到订单<Button onClick={() => Taro.navigateBack()}>返回订单列表</Button></View>
-
-  const productConfig = isProductConfigSnapshot(order.productConfig) && (!order.productId || order.productConfig.id === order.productId) ? order.productConfig : null
-  const selected = productConfig?.products.flatMap((product) => {
-    const plan = getSelectedPlan(product, order.selectedPlans)
-    return plan ? [{ product, plan }] : []
-  }) || []
-
-  return (
-    <View className='order-detail-page'>
-      <View className='order-detail-status'><Text>{order.status}</Text><Text>订单号 {order.id}</Text></View>
-      <View className='order-detail-card'>
-        <Text className='order-detail-title'>{productConfig?.title || '原保障方案'}</Text>
-        {!productConfig && <Text>产品配置缺失，无法还原原保障方案，请联系客服核实。</Text>}
-        {selected.map(({ product, plan }) => <View className='order-detail-plan' key={product.id}>
-          <View className='order-detail-line prominent'><Text>{product.name} · {plan.name}</Text><Text>¥{plan.premium.toFixed(2)}</Text></View>
-          <View className='order-detail-line'><Text>承保公司</Text><Text>{product.company}</Text></View>
-          <View className='order-detail-line'><Text>缴费方式</Text><Text>全额缴纳</Text></View>
-          <View className='order-detail-line'><Text>保障期间</Text><Text>以正式保单为准</Text></View>
-          {plan.protections.map((item) => <View className='order-detail-line' key={item.name}><Text>{item.name}</Text><Text>{item.amount}</Text></View>)}
-        </View>)}
-      </View>
-      {productConfig?.fieldGroups.map((group) => <View className='order-detail-card' key={group.id}>
-        <Text className='order-detail-title'>{group.name}</Text>
-        {group.fields.filter((field) => order.formValues[field.id]).map((field) => {
-          const value = order.formValues[field.id]
-          return <View className='order-detail-line' key={field.id}><Text>{field.name}</Text><Text>{field.type === '身份证' ? mask(value, 4, 4) : field.type === '手机' ? mask(value, 3, 4) : value}</Text></View>
-        })}
-      </View>)}
-      <View className='order-detail-card'>
-        <Text className='order-detail-title'>订单信息</Text>
-        <View className='order-detail-line'><Text>订单号</Text><Text>{order.id}</Text></View>
-        <View className='order-detail-line'><Text>下单时间</Text><Text>{order.createdAt}</Text></View>
-        {order.paidAt && <View className='order-detail-line'><Text>支付时间</Text><Text>{order.paidAt}</Text></View>}
-        <View className='order-detail-line prominent'><Text>保费合计</Text><Text>¥{order.totalPremium.toFixed(2)}</Text></View>
-      </View>
-      {order.status === '已支付' && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/refund-apply/index?id=${encodeURIComponent(order.id)}` })}>申请退保</Button>}
-      {productConfig && (order.status === '待支付' || order.status === '支付失败') && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/payment/index?id=${encodeURIComponent(order.id)}` })}>继续支付</Button>}
-      {(order.status === '退款中' || order.status === '退款完成') && <Button className='order-detail-action' onClick={() => Taro.navigateTo({ url: `/pages/refund-status/index?id=${encodeURIComponent(order.id)}` })}>查看退款进度</Button>}
+  const { order, error, loading, reload } = useOrder()
+  const lock = useRef(false)
+  const lifecycle = useOrderLifecycle()
+  const cancelReason = order ? orderActionBlockReason(order, 'cancel') || pendingBlockReason(order.orderNo, 'cancel') : ''
+  const [busy, setBusy] = useState(false)
+  const navigate = (page: string) => order && Taro.navigateTo({ url: `/pages/${page}/index?orderNo=${encodeURIComponent(order.orderNo)}` })
+  const cancel = async () => {
+    const isActive = lifecycle.capture()
+    if (!isActive() || !order || lock.current || cancelReason) return
+    lock.current = true; setBusy(true)
+    try {
+      const latest = await fetchOrder(order.orderNo)
+      if (!isActive()) return
+      const reason = orderActionBlockReason(latest, 'cancel') || pendingBlockReason(order.orderNo, 'cancel')
+      if (reason) throw new Error(reason)
+      const answer = await Taro.showModal({ title: '取消订单', content: '仅未支付订单可取消，由服务端校验。确定取消？' })
+      if (!isActive() || !answer.confirm) return
+      beginOrderAction(order.orderNo, 'cancel')
+      await cancelOrder(order.orderNo)
+      if (!isActive()) return
+      await reload()
+    } catch (error) { if (isActive()) await Taro.showModal({ title: '取消结果待确认', content: `${message(error)}；请刷新订单，勿重复操作。`, showCancel: false }) }
+    finally { if (isActive()) { lock.current = false; setBusy(false) } }
+  }
+  if (!order) return <View className='detail-empty'>{loading ? '正在查询订单' : error}<Button onClick={reload} disabled={loading}>重新查询</Button></View>
+  return <View className='order-detail-page'>
+    <View className='order-detail-status'><Text>{orderStatus(order)}</Text><Text>订单号 {order.orderNo}</Text></View>
+    <View className='order-detail-card'>
+      <Text className='order-detail-title'>{order.productName || order.productTitle}</Text>
+      <View>订单金额：{money(order.totalAmount)}</View><View>实付金额：{money(order.payAmount)}</View>
+      <View>下单时间：{order.createTime || '未返回'}</View><View>支付时间：{order.payTime || '未返回'}</View>
+      <View>保单号：{order.policyNo || '未返回'}</View><View>保单状态：{order.policyStatus || '未返回'}</View>
+      <View>保障期间：{order.policyEffectiveDate || '待确认'} 至 {order.policyExpiryDate || '待确认'}</View>
     </View>
-  )
+    <View>状态字典尚未提供，当前显示服务端原始状态。</View>
+    <View>{orderActionBlockReason(order, 'pay')}</View>
+    <Button disabled={busy || !!orderActionBlockReason(order, 'pay')} onClick={() => navigate('payment')}>查询支付条件</Button>
+    <Button disabled={busy || !!cancelReason} onClick={cancel}>申请取消未支付订单</Button>
+    <Button disabled={busy || !!orderActionBlockReason(order, 'refund')} onClick={() => navigate('refund-apply')}>申请退款（服务端审核）</Button>
+    <Button onClick={() => navigate('refund-status')}>查询退款记录</Button>
+    <Button disabled={loading || busy} onClick={reload}>刷新订单</Button>
+  </View>
 }
