@@ -9,7 +9,7 @@ export default function PayResultPage() {
   const outcome = useRouter().params.outcome
   return <View className='result-page'>
     <View className='result-icon'>?</View><Text className='result-title'>支付结果核对</Text>
-    <Text className='result-description'>{outcome === 'cancelled' ? '已取消微信支付操作；订单是否支付以服务端为准。' : '支付客户端结果不代表到账；请核对服务端订单。状态字典尚未提供，不自动判定支付成功。'}</Text>
+    <Text className='result-description'>{order?.payStatus === 'SUCCESS' ? '服务端已确认支付成功；不代表保险公司已承保。' : outcome === 'cancelled' ? '已取消微信支付操作；订单是否支付以服务端为准。' : '支付客户端结果不代表到账；请刷新核对服务端订单。'}</Text>
     {loading && <View>正在查询…</View>}{error && <View>{error}</View>}
     {order && <View className='result-card'><View>订单号：{order.orderNo}</View><View>{orderStatus(order)}</View><View>订单金额：{money(order.totalAmount)}</View><View>实付金额：{money(order.payAmount)}</View><View>支付时间：{order.payTime || '未返回'}</View></View>}
     <Button disabled={loading} onClick={reload}>重新查询结果</Button>

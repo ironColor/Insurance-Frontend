@@ -11,6 +11,7 @@ export type ProductPlan = {
   description: string
   protections: ProtectionItem[]
   isDefault?: boolean
+  sort?: number
 }
 
 export type ProductItem = {
@@ -18,6 +19,9 @@ export type ProductItem = {
   name: string
   type: '主险' | '附加险'
   company: string
+  classify?: string
+  description?: string
+  sort?: number
   required: boolean
   defaultPlanId: string | null
   plans: ProductPlan[]
@@ -27,6 +31,8 @@ export type InsuredField = {
   id: string
   name: string
   type: '文本' | '日期' | '单选' | '多选' | '身份证' | '手机'
+  fieldName?: string
+  sort?: number
   placeholder: string
   required: boolean
   options?: string[]
@@ -40,6 +46,7 @@ export type InsuredField = {
 }
 
 export type FieldGroup = {
+  sort?: number
   id: string
   name: string
   fields: InsuredField[]

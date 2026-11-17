@@ -163,6 +163,7 @@ function fields(value: unknown, groupName: string, issues: string[], used: Set<s
       if ((item.editable === '0' || item.editable === 0 || item.editable === false) && yes(item.required) && !defaultValue.trim()) throw new Error('必填只读字段未配置默认值')
       return [{
         id: identity(item, 'fieldId', '投保字段', used), name: label, type,
+        fieldName: text(item.fieldName), sort: Number(item.sort) || 0,
         placeholder: text(item.fieldPlaceholder), required: yes(item.required),
         editable: item.editable !== '0' && item.editable !== 0 && item.editable !== false,
         defaultValue,
@@ -187,7 +188,7 @@ export function normalizeProductConfig(value: unknown, expectedProductId?: strin
   const planIds = new Set<string>()
   const products = list(value.planGroupList, '产品方案组').filter(visible).map((group): ProductItem => {
     const plans = list(group.planList, '产品方案').filter(visible).map((plan): ProductPlan => ({
-      id: identity(plan, 'planId', '产品方案', planIds), name: text(plan.planName),
+      id: identity(plan, 'planId', '产品方案', planIds), name: text(plan.planName), sort: Number(plan.sort) || 0,
       premium: price(plan.price, text(plan.planName) || '产品方案'), description: text(plan.planDesc), isDefault: yes(plan.isDefault),
       protections: list(plan.liabilityList, '保障责任').filter(visible).map((liability) => ({
         name: text(liability.liabilityName), amount: text(liability.sumInsured), description: text(liability.description)
@@ -198,6 +199,7 @@ export function normalizeProductConfig(value: unknown, expectedProductId?: strin
     const selected = plans.find((plan) => plan.isDefault)
     return {
       id: identity(group, 'groupId', '产品方案组', groupIds), name: text(group.groupName),
+      classify: text(group.classify), description: text(group.groupDesc), sort: Number(group.sort) || 0,
       type: group.classify === '2' || group.classify === 2 ? '附加险' : '主险', company: text(group.insCompanyName ?? value.insCompanyName), required,
       defaultPlanId: selected?.id ?? (required || yes(group.isDefault) ? plans[0].id : null), plans
     }
@@ -210,7 +212,7 @@ export function normalizeProductConfig(value: unknown, expectedProductId?: strin
     const name = text(block.blockName)
     const blockFields = fields(block.fieldConfigList, name, formIssues, fieldIds)
     if (!blockFields.length) return []
-    return [{ id: identity(block, 'blockId', '投保信息分组', blockIds), name, fields: blockFields }]
+    return [{ id: identity(block, 'blockId', '投保信息分组', blockIds), name, sort: Number(block.sort) || 0, fields: blockFields }]
   })
   if (!fieldGroups.length && !formIssues.length) formIssues.push('该产品未配置投保信息，请联系管理员完成配置后再投保')
   const service = list(value.servicePhoneList, '客服电话').find(visible)

@@ -1,7 +1,7 @@
 import { Button, Input, Text, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useRef, useState } from 'react'
-import { fetchOrders, message, money, orderStatus, ServerOrder } from '../../services/order'
+import { fetchOrders, loadOrderDictionaries, message, money, orderStatus, ServerOrder } from '../../services/order'
 import { useOrderLifecycle } from '../../hooks/use-order-lifecycle'
 import './index.css'
 
@@ -24,6 +24,7 @@ export default function OrdersPage() {
     if (next === 1) setOrders([])
     try {
       const result = await fetchOrders(next, submittedKeyword.current)
+      await loadOrderDictionaries().catch(() => {})
       if (!isActive()) return
       setOrders(previous => next === 1 ? result.rows : [...previous, ...result.rows]); setTotal(result.total); setPage(next)
     } catch (error) { if (isActive()) setError(message(error)) }
