@@ -5,7 +5,7 @@ const vm = require('node:vm')
 const ts = require('typescript')
 function load(file, modules) {
   const exports = {}
-  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText, { exports, require(name) { if (!(name in modules)) throw Error(`Unexpected dependency ${name}`); return modules[name] } })
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, { exports, require(name) { if (!(name in modules)) throw Error(`Unexpected dependency ${name}`); return modules[name] } })
   return exports
 }
 function setup() {
@@ -178,4 +178,66 @@ test('cancel uses documented GET; refund states mapped only documented values', 
   const s = setup(); await s.order.cancelOrder('O/1'); assert.equal(s.calls[0].method, 'GET'); assert.match(s.calls[0].url, /cancelOrder\/O%2F1$/)
   assert.equal(s.order.refundStatus('SUCCESS'), '退款成功'); assert.match(s.order.refundStatus('99'), /99/)
   assert.match(s.order.orderStatus({ orderNo: '1', payStatus: '1' }), /支付状态：1/); assert.equal(s.order.money(undefined), '待服务端确认')
+})
+
+function ordersPageSetup() {
+  const slots = []; const calls = []; let cursor = 0; let didShow
+  const react = {
+    useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === 'function' ? value(slots[i]) : value }] },
+    useRef(initial) { const i = cursor++; if (!(i in slots)) slots[i] = { current: initial }; return slots[i] }
+  }
+  const jsx = (type, props) => ({ type, props })
+  const Page = load('src/pages/orders/index.tsx', {
+    react, 'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
+    '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', Button: 'Button' },
+    '@tarojs/taro': { useDidShow: fn => { didShow = fn } },
+    '../../hooks/use-order-lifecycle': { useOrderLifecycle: () => ({ capture: () => () => true }) },
+    '../../services/order': { fetchOrders: (page, keyword) => new Promise((resolve, reject) => calls.push({ page, keyword, resolve, reject })), loadOrderDictionaries: async () => {}, message: e => e.message, money: v => `¥${v}` },
+    './index.css': {}
+  }).default
+  const render = () => { cursor = 0; return Page() }
+  return { calls, render, show: () => didShow() }
+}
+function pageNodes(node) {
+  if (Array.isArray(node)) return node.flatMap(pageNodes)
+  if (!node || typeof node !== 'object') return []
+  return [node, ...pageNodes(node.props?.children)]
+}
+function pageText(node) {
+  if (Array.isArray(node)) return node.map(pageText).join('')
+  if (node && typeof node === 'object') return pageText(node.props?.children)
+  return typeof node === 'string' || typeof node === 'number' ? String(node) : ''
+}
+const tick = () => new Promise(resolve => setImmediate(resolve))
+test('order page first paint and searching use centered loading, then styled empty/error states', async () => {
+  const s = ordersPageSetup(); let tree = s.render()
+  assert.match(pageText(pageNodes(tree).find(n => n.props.className === 'orders-state')), /正在查询订单/)
+  assert.doesNotMatch(pageText(tree), /暂无订单/)
+  s.show(); s.calls[0].resolve({ rows: [], total: 0 }); await tick(); tree = s.render()
+  assert.match(pageText(tree), /暂无订单/); assert.match(pageText(tree), /去看看产品/)
+  pageNodes(tree).find(n => n.type === 'Input').props.onInput({ detail: { value: ' A ' } }); tree = s.render()
+  pageNodes(tree).find(n => n.type === 'Input').props.onConfirm(); tree = s.render()
+  assert.equal(s.calls[1].keyword, 'A'); assert.doesNotMatch(pageText(tree), /暂无订单/)
+  assert.match(pageText(pageNodes(tree).find(n => n.props.className === 'orders-state')), /正在查询订单/)
+  s.calls[1].reject(Error('测试网络故障')); await tick(); tree = s.render()
+  assert.match(pageText(pageNodes(tree).find(n => n.props.className === 'orders-state')), /订单暂时无法加载/)
+  pageNodes(tree).find(n => n.type === 'Button' && pageText(n) === '重新加载').props.onClick()
+  s.calls[2].resolve({ rows: [], total: 0 }); await tick(); tree = s.render()
+  assert.match(pageText(tree), /未找到相关订单/); assert.match(pageText(tree), /查看全部订单/)
+})
+test('load-more retries the failed page with submitted query, retaining existing cards', async () => {
+  const s = ordersPageSetup(); s.render(); s.show()
+  s.calls[0].resolve({ rows: [{ orderNo: 'DEMO1', orderStatus: 'NOTPAY', totalAmount: 120 }], total: 21 }); await tick()
+  let tree = s.render(); pageNodes(tree).find(n => n.type === 'Input').props.onInput({ detail: { value: 'UNSUBMITTED' } }); tree = s.render()
+  const more = pageNodes(tree).find(n => n.type === 'Button' && pageText(n) === '加载更多订单')
+  more.props.onClick(); more.props.onClick(); assert.equal(s.calls.length, 2); tree = s.render()
+  assert.match(pageText(pageNodes(tree).find(n => n.props.className === 'orders-list-footer')), /正在加载更多/)
+  assert.equal(pageNodes(tree).filter(n => n.props.className === 'order-card').length, 1)
+  assert.equal(s.calls[1].keyword, ''); assert.equal(s.calls[1].page, 2)
+  s.calls[1].reject(Error('测试分页失败')); await tick(); tree = s.render()
+  pageNodes(tree).find(n => n.type === 'Button' && pageText(n) === '重新加载').props.onClick()
+  assert.equal(s.calls[2].page, 2); assert.equal(s.calls[2].keyword, '')
+  s.calls[2].resolve({ rows: [{ orderNo: 'DEMO2' }], total: 2 }); await tick(); tree = s.render()
+  assert.equal(pageNodes(tree).filter(n => n.props.className === 'order-card').length, 2)
+  assert.match(pageText(tree), /已显示全部订单/)
 })
