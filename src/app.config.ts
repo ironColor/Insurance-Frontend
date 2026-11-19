@@ -18,6 +18,7 @@ export default defineAppConfig({
     'pages/refund-status/index',
     'pages/qr-expired/index'
   ],
+  lazyCodeLoading: 'requiredComponents',
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
