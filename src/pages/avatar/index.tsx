@@ -48,10 +48,10 @@ export default function AvatarPage() {
       <Text className='avatar-hint'>点击拍照或从相册选择新头像</Text>
       <View className='avatar-preview'>{avatarUrl ? <Image src={avatarUrl} mode='aspectFill' /> : <Text>用</Text>}</View>
       <View className='avatar-options'>
-        <Button onClick={() => choose('camera')}>拍照</Button>
-        <Button onClick={() => choose('album')}>从相册选择</Button>
+        <Button className='avatar-option ui-secondary-button' hoverClass='ui-button-hover' disabled={saving} onClick={() => choose('camera')}>拍照</Button>
+        <Button className='avatar-option ui-secondary-button' hoverClass='ui-button-hover' disabled={saving} onClick={() => choose('album')}>从相册选择</Button>
       </View>
-      <Button className='avatar-save' loading={saving} disabled={saving} onClick={save}>保存</Button>
+      <Button className='avatar-save ui-primary-button' hoverClass='ui-button-hover' loading={saving} disabled={saving} onClick={save}>保存</Button>
     </View>
   )
 }

@@ -41,7 +41,7 @@ export async function openProductDocument(document: ProductDocument): Promise<vo
   if (document.contentType === 'file') {
     Taro.showLoading({ title: '正在打开文件', mask: true })
     try {
-      const result = await Taro.downloadFile({ url, timeout: 30000 })
+      const result = await Taro.downloadFile({ url, timeout: 60000 })
       if (result.statusCode !== 200) throw new Error('文件下载失败')
       await Taro.openDocument({ filePath: result.tempFilePath, showMenu: true })
     } catch {
@@ -67,7 +67,7 @@ export async function openProductDocument(document: ProductDocument): Promise<vo
       else resolve()
     }
     const receive = (result: string) => finish(result === 'loaded' ? undefined : new Error('协议页面尚未成功加载'))
-    const timeout = setTimeout(() => finish(new Error('协议页面加载超时，请重试')), 30000)
+    const timeout = setTimeout(() => finish(new Error('协议页面加载超时，请重试')), 60000)
     Taro.eventCenter.on(eventName, receive)
     void Taro.navigateTo({
       url: `/pages/product-document/index?url=${encodeURIComponent(url)}&title=${encodeURIComponent(document.title)}&requestId=${requestId}`

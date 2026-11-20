@@ -48,8 +48,8 @@ export default function LoginPage() {
     Taro.showModal({
       title: isPrivacy ? '隐私政策' : '用户协议',
       content: isPrivacy
-        ? '我们仅在提供登录、实名认证及保险服务所必需的范围内处理你的个人信息，具体内容以后端正式协议为准。'
-        : '登录并使用本服务前，请确认你已阅读并同意服务规则。正式协议内容接入后端配置后展示。',
+        ? '我们仅在提供登录、实名认证及保险服务所必需的范围内处理你的个人信息，具体内容以隐私政策为准。'
+        : '登录并使用本服务前，请阅读并同意用户协议和隐私政策。',
       showCancel: false,
       confirmText: '我知道了'
     })

@@ -23,7 +23,7 @@ function extractLogin(data: unknown): { token: string; headerName: string; userI
   const record = asRecord(data)
   const nested = asRecord(record?.userInfo) || asRecord(record?.user) || asRecord(record?.wxUser)
   const token = readString(record?.apiToken) || readString(data) || readString(record?.access_token) || readString(record?.accessToken) || readString(record?.token)
-  if (!token) throw new Error('登录服务未返回令牌')
+  if (!token) throw new Error('登录未完成，请重试')
   return {
     token,
     headerName: readString(record?.header) || 'Wx-Authorization',
@@ -33,7 +33,7 @@ function extractLogin(data: unknown): { token: string; headerName: string; userI
 
 /** 微信 code 换取业务令牌，再用手机号动态令牌完成绑定。 */
 export async function loginWithWechat(phoneCode: string): Promise<LoginResult> {
-  const result = await Taro.login({ timeout: 10000 })
+  const result = await Taro.login({ timeout: 60000 })
   if (!result.code) throw new Error('未获取到微信登录凭证')
 
   const loginData = await apiRequest<unknown>('/login', 'POST', {

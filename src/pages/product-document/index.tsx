@@ -29,11 +29,13 @@ export default function ProductDocumentPage() {
 
   if (url && !failed) return <WebView src={url} onLoad={() => notifyResult(true)} onError={() => { setFailed(true); notifyResult(false) }} />
   return (
-    <View className='product-document-state'>
-      <Text className='product-document-title'>协议暂时无法打开</Text>
-      <Text>请稍后重试，或复制链接到浏览器查看。</Text>
-      {url && <Button onClick={() => void copyDocumentUrl(url).catch(() => Taro.showToast({ title: '链接复制失败，请重试', icon: 'none' }))}>复制协议链接</Button>}
-      {url && <Button onClick={() => setFailed(false)}>重新加载</Button>}
+    <View className='product-document-state ui-state'>
+      <View className='ui-state-mark'>!</View><Text className='product-document-title ui-state-title'>协议暂时无法打开</Text>
+      <Text className='ui-state-copy'>请稍后重试，或复制链接到浏览器查看。</Text>
+      {url && <View className='ui-state-actions'>
+        <Button className='ui-primary-button' hoverClass='ui-button-hover' onClick={() => setFailed(false)}>重新加载</Button>
+        <Button className='ui-secondary-button' hoverClass='ui-button-hover' onClick={() => void copyDocumentUrl(url).catch(() => Taro.showToast({ title: '链接复制失败，请重试', icon: 'none' }))}>复制协议链接</Button>
+      </View>}
     </View>
   )
 }

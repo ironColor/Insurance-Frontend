@@ -15,7 +15,7 @@ export async function getCurrentRegion(publicKey: string | undefined, isActive: 
       url: 'https://apis.map.qq.com/ws/geocoder/v1/',
       method: 'GET',
       data: { key: publicKey, location: `${latitude},${longitude}`, get_poi: 0 },
-      timeout: 8000
+      timeout: 60000
     })
     if (!isActive() || statusCode !== 200 || data?.status !== 0) return null
     const area = data.result?.address_component

@@ -389,63 +389,7 @@
   display: none;
 }
 
-.product-intro-state {
-  display: flex;
-  min-height: 100vh;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 48px;
-  color: #64748b;
-  background: #eaf9ff;
-  font-size: 28px;
-  text-align: center;
-}
-
-.product-intro-state-title {
-  color: #253654;
-  font-size: 34px;
-  font-weight: 600;
-}
-
-.product-intro-state-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 440px;
-  margin-top: 8px;
-}
-
-button.product-intro-state-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 84px;
-  margin: 0;
-  padding: 12px 24px;
-  border: 1px solid transparent;
-  border-radius: 44px;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-button.product-intro-state-button::after { border: 0; }
-button.product-intro-state-primary {
-  color: #fff;
-  background: linear-gradient(110deg, #399ce7, #287dce);
-  box-shadow: 0 8px 22px rgba(40, 125, 206, .18);
-}
-button.product-intro-state-secondary {
-  color: #2877b7;
-  border-color: #c3ddf1;
-  background: #fff;
-}
-button.product-intro-state-hover { opacity: .8; }
+.product-intro-state { overflow-wrap: anywhere; }
 
 .media-retry {
   margin-top: 24px;

@@ -1,25 +1,2 @@
-.product-document-state {
-  display: flex;
-  min-height: 100vh;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 48px;
-  color: #64748b;
-  background: #f5f8fc;
-  font-size: 28px;
-  text-align: center;
-}
-
-.product-document-title {
-  color: #253654;
-  font-size: 36px;
-  font-weight: 600;
-}
-
-.product-document-state button {
-  width: 100%;
-  margin: 0;
-}
+/* 协议错误页复用全局状态样式，长标题与错误提示保持自然换行。 */
+.product-document-state { overflow-wrap: anywhere; }

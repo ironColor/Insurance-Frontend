@@ -24,7 +24,11 @@ type DetailState = { product: ProductItem; plan: ProductPlan } | null
 
 export default function PlanPage() {
   const { config, loading, error, reload, shareUser } = useProductConfig()
-  if (!config) return <View className='plan-page product-load-state'><Text>{loading ? '正在加载产品方案…' : error || '未找到产品配置'}</Text>{!loading && <Button onClick={reload}>重新加载</Button>}</View>
+  if (!config) return <View className='plan-page product-load-state ui-state'>
+    <View className={loading ? 'ui-state-spinner' : 'ui-state-mark'}>{loading ? '' : '!'}</View>
+    <Text className='ui-state-title'>{loading ? '正在加载产品方案…' : '产品方案暂时无法加载'}</Text>
+    {!loading && <><Text className='ui-state-copy'>{error || '产品信息暂不可用，请稍后重试'}</Text><Button className='ui-primary-button' hoverClass='ui-button-hover' onClick={reload}>重新加载</Button></>}
+  </View>
   return <PlanContent key={config.id} productConfig={config} shareUser={shareUser} />
 }
 
@@ -205,7 +209,7 @@ function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfi
             <ScrollView className='sheet-content' scrollY>
               {productConfig.forceRead.map((document) => <View key={document.id}>
                 <Text className='notice-section-title'>{document.title}</Text>
-                {document.contentType === 'text' ? document.content.map((content, index) => <RichText className='notice-paragraph' key={index} nodes={content} />) : <Button onClick={() => void openProductDocument(document).catch(() => undefined)}>查看文件</Button>}
+                {document.contentType === 'text' ? document.content.map((content, index) => <RichText className='notice-paragraph' key={index} nodes={content} />) : <Button className='ui-secondary-button' hoverClass='ui-button-hover' onClick={() => void openProductDocument(document).catch(() => undefined)}>查看文件</Button>}
               </View>)}
             </ScrollView>
             <Button className='sheet-button' onClick={() => setNoticeVisible(false)}>我知道了</Button>

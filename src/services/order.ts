@@ -7,7 +7,7 @@ export type ServerOrder = {
   productName?: string; productTitle?: string; totalAmount?: number | string; payAmount?: number | string; discountAmount?: number | string
   orderStatus?: string; payStatus?: string; policyStatus?: string; policyNo?: string
   policyEffectiveDate?: string; policyExpiryDate?: string; createTime?: string; payTime?: string
-  orderData?: string; expireTime?: string; refundList?: RefundRecord[]
+  orderData?: string; fieldData?: string | null; expireTime?: string; refundList?: RefundRecord[]
   pay?: { payChannel?: string; payChannelName?: string; payAmount?: number; payStatus?: string; payTime?: string }
 }
 export type PayChannel = { id: string | number; name?: string; code?: string; status?: string }
@@ -15,12 +15,12 @@ export type PayRequest = { amount: number; subject: string; productId?: string |
 export type PayResponse = { success?: boolean; orderId?: string | number; orderNo?: string; errorMsg?: string; timeStamp?: string; nonceStr?: string; packageStr?: string; signType?: string; paySign?: string }
 export const message = (error: unknown) => error instanceof Error ? error.message : '请求失败，请稍后重试'
 export function amountYuan(value: unknown): number {
-  if ((typeof value !== 'string' && typeof value !== 'number') || !/^\d+(?:\.\d{1,2})?$/.test(String(value))) throw new Error('服务端金额格式异常，请刷新订单或联系客服')
+  if ((typeof value !== 'string' && typeof value !== 'number') || !/^\d+(?:\.\d{1,2})?$/.test(String(value))) throw new Error('订单金额暂时无法确认，请刷新订单或联系客服')
   const amount = Number(value)
   if (!Number.isSafeInteger(Math.round(amount * 100))) throw new Error('金额超出有效范围')
   return amount
 }
-export const money = (value: unknown) => { try { return `¥${amountYuan(value).toFixed(2)}` } catch { return '待服务端确认' } }
+export const money = (value: unknown) => { try { return `¥${amountYuan(value).toFixed(2)}` } catch { return '待确认' } }
 export type DictItem = { dictLabel: string; dictValue: string; status?: string }
 const dictionaries: Record<string, DictItem[]> = {}
 export async function fetchDictionary(type: string): Promise<DictItem[]> {
@@ -34,7 +34,9 @@ export async function loadOrderDictionaries() { await Promise.all(['pay_order_st
 const label = (type: string, value?: string) => dictionaries[type]?.find(row => row.dictValue === value)?.dictLabel
 export const refundStatus = (value?: string) => label('pay_refund_status', value) || (value === 'SUCCESS' ? '退款成功' : `退款状态：${value || '未返回'}`)
 const orderLabels: Record<string, string> = { NOTPAY: '待支付', PAID: '已支付', CANCELLED: '已取消', CLOSED: '已关闭', REFUNDING: '退款中', REFUNDED: '已退款' }
-export const orderStatus = (order: ServerOrder) => `订单状态：${label('pay_order_status', order.orderStatus) || orderLabels[order.orderStatus || ''] || order.orderStatus || '未返回'}；支付状态：${label('pay_status', order.payStatus) || order.payStatus || '未返回'}`
+export const orderStateText = (order: ServerOrder) => label('pay_order_status', order.orderStatus) || orderLabels[order.orderStatus || ''] || order.orderStatus || '未返回'
+export const payStateText = (order: ServerOrder) => label('pay_status', order.payStatus) || ({ NOTPAY: '未支付', SUCCESS: '支付成功', REFUNDING: '退款中', REFUNDED: '已退款', CLOSED: '已关闭' } as Record<string, string>)[order.payStatus || ''] || order.payStatus || '未返回'
+export const orderStatus = (order: ServerOrder) => `订单状态：${orderStateText(order)}；支付状态：${payStateText(order)}`
 const segment = (value: string | number) => { if (!String(value).trim()) throw new Error('订单标识缺失'); return encodeURIComponent(String(value)) }
 export async function fetchOrder(orderNo: string): Promise<ServerOrder> {
   const order = await apiRequest<ServerOrder>(`/order/getOrderByOrderNo/${segment(orderNo)}`, 'GET')

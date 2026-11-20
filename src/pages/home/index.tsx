@@ -88,7 +88,7 @@ export default function HomePage() {
   const openProduct = (value?: number | string) => {
     const productId = homeProductId(value)
     if (!productId) {
-      Taro.showToast({ title: '产品信息暂未配置', icon: 'none' })
+      Taro.showToast({ title: '该产品暂不可用，请选择其他产品', icon: 'none' })
       return
     }
     void Taro.navigateTo({ url: buildProductUrl('/pages/index/index', productId) }).catch(() => {

@@ -463,3 +463,6 @@
   font-size: 23px;
   line-height: 1.85;
 }
+
+.extra-plan-option { border: 1px solid #dce7f4; border-radius: 16px; }
+.extra-plan-option::after { border: 0; }

@@ -25,13 +25,14 @@ export default function ProductIntroPage() {
 
   if (!config) {
     return (
-      <View className='product-intro-state'>
-        <Text className='product-intro-state-title'>{loading ? '正在加载产品信息…' : '产品信息加载失败'}</Text>
-        {!loading && <Text>{error}</Text>}
+      <View className='product-intro-state ui-state'>
+        <View className={loading ? 'ui-state-spinner' : 'ui-state-mark'}>{loading ? '' : '!'}</View>
+        <Text className='product-intro-state-title ui-state-title'>{loading ? '正在加载产品信息…' : '产品信息加载失败'}</Text>
+        {!loading && <Text className='ui-state-copy'>{error}</Text>}
         {!loading && (
-          <View className='product-intro-state-actions'>
-            <Button className='product-intro-state-button product-intro-state-primary' hoverClass='product-intro-state-hover' onClick={reload}>重新加载</Button>
-            <Button className='product-intro-state-button product-intro-state-secondary' hoverClass='product-intro-state-hover' onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>
+          <View className='product-intro-state-actions ui-state-actions'>
+            <Button className='product-intro-state-button product-intro-state-primary ui-primary-button' hoverClass='ui-button-hover' onClick={reload}>重新加载</Button>
+            <Button className='product-intro-state-button product-intro-state-secondary ui-secondary-button' hoverClass='ui-button-hover' onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>
           </View>
         )}
       </View>
@@ -47,7 +48,7 @@ export default function ProductIntroPage() {
   const callService = () => {
     const phoneNumber = config.servicePhone.replace(/[\s-]/g, '')
     if (!/^\+?\d{5,20}$/.test(phoneNumber)) {
-      void Taro.showToast({ title: '暂未配置客服电话', icon: 'none' })
+      void Taro.showToast({ title: '客服暂时无法接通，请稍后重试', icon: 'none' })
       return
     }
     void Taro.makePhoneCall({ phoneNumber })
@@ -175,7 +176,7 @@ export default function ProductIntroPage() {
             <ScrollView className='agreement-modal-content' scrollY>
               {activeAgreement.content.length > 0
                 ? activeAgreement.content.map((html, index) => <RichText key={index} className='agreement-modal-text' nodes={html} />)
-                : <Text className='agreement-modal-text'>协议正文暂未配置，请联系客服确认。</Text>}
+                : <Text className='agreement-modal-text'>协议暂时无法查看，请联系客服。</Text>}
             </ScrollView>
             <Button className='agreement-modal-button' onClick={() => setActiveAgreement(null)}>我知道了</Button>
           </View>

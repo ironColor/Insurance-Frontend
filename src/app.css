@@ -1,7 +1,7 @@
 page {
   min-height: 100%;
-  color: #253654;
-  background: #e9f9ff;
+  color: #284361;
+  background: #f5f8fc;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
 }
 
@@ -16,20 +16,47 @@ swiper-item {
   box-sizing: border-box;
 }
 
-.product-load-state {
+.ui-primary-button, .ui-secondary-button {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 88px;
+  margin: 0;
+  padding: 18px 24px;
+  border: 0;
+  border-radius: 44px;
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.ui-primary-button { color: #fff; background: linear-gradient(135deg, #5a9ef7, #347fea); box-shadow: 0 10px 22px rgba(69, 139, 232, .14); }
+.ui-secondary-button { border: 1px solid #dce7f4; color: #718aa5; background: #fff; }
+.ui-primary-button[disabled] { color: #fff; background: #94bbef; box-shadow: none; }
+.ui-secondary-button[disabled] { color: #a1afbf; background: #f5f8fc; }
+.ui-primary-button::after, .ui-secondary-button::after { border: 0; }
+.ui-button-hover { opacity: .82; }
+.ui-state, .product-load-state.ui-state {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  padding: 48px 32px;
-  gap: 28px;
-  color: #60738b;
+  padding: 48px 32px calc(48px + env(safe-area-inset-bottom));
+  gap: 24px;
+  color: #8499af;
+  background: linear-gradient(180deg, #edf5ff 0, #f5f8fc 360px, #f5f8fc 100%);
+  font-size: 24px;
+  line-height: 1.8;
   text-align: center;
   flex-direction: column;
 }
-
-.product-load-state button {
-  max-width: 100%;
-  color: #287cc7;
-  font-size: 28px;
-}
+.ui-state-title { color: #304b69; font-size: 32px; font-weight: 600; line-height: 1.5; }
+.ui-state-copy { max-width: 100%; overflow-wrap: anywhere; }
+.ui-state .ui-primary-button, .ui-state .ui-secondary-button { width: auto; min-width: 240px; max-width: 100%; margin-top: 8px; padding-right: 40px; padding-left: 40px; }
+.ui-state-actions { display: flex; width: 100%; max-width: 440px; margin-top: 8px; flex-direction: column; gap: 20px; }
+.ui-state .ui-state-actions .ui-primary-button, .ui-state .ui-state-actions .ui-secondary-button { width: 100%; min-width: 0; margin: 0; }
+.ui-state-spinner { width: 48px; height: 48px; border: 5px solid #c5daf8; border-top-color: #4c93ef; border-radius: 50%; animation: ui-state-spin .8s linear infinite; }
+.ui-state-mark { display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border-radius: 50%; color: #7d9bc4; background: #e5effe; font-size: 50px; line-height: 1; }
+@keyframes ui-state-spin { to { transform: rotate(360deg); } }

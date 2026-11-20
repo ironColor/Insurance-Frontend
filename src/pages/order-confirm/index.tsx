@@ -56,10 +56,10 @@ export default function OrderConfirmPage() {
     void Taro.navigateTo({ url: buildProductUrl('/pages/payment/index', draft.productId, draft.shareUser) })
   }
 
-  if (!loaded) return <View className='confirm-empty'>正在读取订单信息</View>
+  if (!loaded) return <View className='confirm-empty ui-state'><View className='ui-state-spinner' /><Text className='ui-state-title'>正在读取订单信息</Text></View>
 
   if (!draft || !productConfig) {
-    return <View className='confirm-empty'><Text>产品信息已失效，请重新选择产品</Text><Button onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button></View>
+    return <View className='confirm-empty ui-state'><View className='ui-state-mark'>!</View><Text className='ui-state-title'>产品信息已失效，请重新选择产品</Text><Button className='ui-primary-button' hoverClass='ui-button-hover' onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button></View>
   }
 
   return (

@@ -14,8 +14,8 @@
 .profile-avatar-hint { margin-top: 9px; color: #3983c7; font-size: 21px; }
 .profile-field { display: flex; align-items: center; justify-content: space-between; min-height: 105px; gap: 20px; border-bottom: 1px solid #eaf0f6; color: #35506c; font-size: 25px; }
 .profile-card > .profile-field:last-child { border-bottom: 0; }
-.profile-field input { width: 60%; height: 80px; color: #173654; text-align: right; }
-.profile-field input[disabled] { color: #a2b0bf; }
+.profile-input { width: 60%; height: 80px; color: #173654; text-align: right; }
+.profile-input[disabled] { color: #a2b0bf; }
 .profile-value { max-width: 65%; overflow: hidden; color: #244867; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .profile-readonly { max-width: 65%; overflow: hidden; color: #899db0; font-size: 23px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .profile-footnote { display: block; margin: 22px 5px 0; color: #93a5b6; font-size: 20px; line-height: 1.5; }

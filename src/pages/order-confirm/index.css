@@ -148,16 +148,3 @@
 .pay-button::after {
   display: none;
 }
-
-.confirm-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  color: #738295;
-  flex-direction: column;
-}
-
-.confirm-empty button {
-  margin-top: 30px;
-}

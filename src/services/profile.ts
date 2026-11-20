@@ -54,7 +54,7 @@ export async function fetchUserProfile(shouldApply: () => boolean = () => true):
   const session = getAuthSession()
   const userId = session?.userId || getUserProfile().userId
   if (!session) throw new Error('请先登录')
-  if (!userId) throw new Error('服务端未返回用户标识，暂无法读取个人信息')
+  if (!userId) throw new Error('个人信息暂时无法读取，请稍后重试')
   const user = await apiRequest<WxUserVo>(`/user/${encodeURIComponent(userId)}`, 'GET')
   if (!user) throw new Error('用户资料为空')
   const profile: UserProfile = {
@@ -75,7 +75,7 @@ export async function fetchUserProfile(shouldApply: () => boolean = () => true):
 
 export async function saveUserProfile(profile: UserProfile): Promise<void> {
   const userId = getAuthSession()?.userId || profile.userId
-  if (!userId) throw new Error('服务端未返回用户标识，暂无法保存个人信息')
+  if (!userId) throw new Error('个人信息暂时无法保存，请稍后重试')
   await apiRequest<void>('/user', 'PUT', {
     userId,
     nickName: profile.nickname.trim(),
@@ -88,9 +88,9 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 }
 
 export async function uploadUserAvatar(filePath: string): Promise<string> {
-  if (!hasProfileUserId()) throw new Error('服务端未返回用户标识，暂无法修改头像')
+  if (!hasProfileUserId()) throw new Error('头像暂时无法修改，请稍后重试')
   const file = await apiUpload<RemoteFile>('/user/upload', filePath)
-  if (!file?.url) throw new Error('上传服务未返回头像地址')
+  if (!file?.url) throw new Error('头像上传失败，请重试')
   return file.url
 }
 

@@ -5,7 +5,7 @@ import type { ServerOrder } from './order'
 export type OrderAction = 'pay' | 'cancel' | 'refund'
 export const CONTRACT_BLOCK_REASON = '订单状态规则待服务方确认，暂不能执行该操作'
 export function orderActionBlockReason(order: ServerOrder, action: OrderAction): string {
-  if (action === 'cancel') return '本期不支持手动取消，未支付订单由服务端自动关闭'
+  if (action === 'cancel') return '暂不支持手动取消，未支付订单到期后将自动关闭'
   if (action === 'pay') return order.orderStatus === 'NOTPAY' ? '' : '仅待支付订单可继续支付，请刷新订单状态'
   return order.orderStatus === 'PAID' ? '' : '仅已支付订单可申请退款，请刷新订单状态'
 }

@@ -61,7 +61,8 @@ export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT'
     data,
     dataType: 'text',
     responseType: 'text',
-    timeout: 30000,
+    // 支付前校验不设置应用层超时，交由微信原生网络层处理。
+    ...(path.split('?')[0] === '/pay/validBeforePay' ? {} : { timeout: 60000 }),
     header: {
       'Content-Type': 'application/json',
       ...(session ? authHeader(session) : {})
@@ -92,7 +93,7 @@ export async function apiUpload<T>(path: string, filePath: string): Promise<T> {
     url: `${API_BASE_URL}${path}`,
     filePath,
     name: 'file',
-    timeout: 30000,
+    timeout: 60000,
     header: authHeader(session)
   })
   if (response.statusCode === 401 || response.statusCode === 403) {

@@ -15,12 +15,16 @@ type ErrorMap = Record<string, string>
 export default function InsurePage() {
   const { config, loading, error, reload } = useProductConfig()
   const [savedDraft] = useState(() => Taro.getStorageSync<InsuranceDraft>(INSURANCE_DRAFT_KEY))
-  if (!config) return <View className='insure-page product-load-state'><Text>{loading ? '正在加载投保配置…' : error || '未找到产品配置'}</Text>{!loading && <Button onClick={reload}>重新加载</Button>}</View>
+  if (!config) return <View className='insure-page product-load-state ui-state'>
+    <View className={loading ? 'ui-state-spinner' : 'ui-state-mark'}>{loading ? '' : '!'}</View>
+    <Text className='ui-state-title'>{loading ? '正在加载投保信息…' : '投保信息暂时无法加载'}</Text>
+    {!loading && <><Text className='ui-state-copy'>{error || '产品信息暂不可用，请稍后重试'}</Text><Button className='ui-primary-button' hoverClass='ui-button-hover' onClick={reload}>重新加载</Button></>}
+  </View>
   const selections = savedDraft?.selectedPlans || {}
   const validSavedValues = savedDraft?.formValues && typeof savedDraft.formValues === 'object' && !Array.isArray(savedDraft.formValues) && Object.values(savedDraft.formValues).every((value) => typeof value === 'string')
   const invalidSelection = config.products.some((product) => (product.required || selections[product.id]) && !getSelectedPlan(product, selections)) || Object.keys(selections).some((id) => selections[id] && !config.products.some((product) => product.id === id))
   if (savedDraft?.productId !== config.id || !savedDraft.productConfig || !validSavedValues || invalidSelection || !config.products.some((product) => getSelectedPlan(product, selections))) {
-    return <View className='insure-page product-load-state'><Text>投保方案已变更，请重新选择</Text><Button onClick={() => Taro.redirectTo({ url: buildProductUrl('/pages/plan/index', config.id, savedDraft?.shareUser) })}>重新选择方案</Button></View>
+    return <View className='insure-page product-load-state ui-state'><View className='ui-state-mark'>!</View><Text className='ui-state-title'>投保方案已变更，请重新选择</Text><Button className='ui-primary-button' hoverClass='ui-button-hover' onClick={() => Taro.redirectTo({ url: buildProductUrl('/pages/plan/index', config.id, savedDraft?.shareUser) })}>重新选择方案</Button></View>
   }
   const initialDraft = { ...savedDraft, productConfig: config, totalPremium: calculatePremium(config, selections) }
   return <InsureContent key={config.id} productConfig={config} initialDraft={initialDraft} />
@@ -138,11 +142,11 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
 
   return (
     <View className='insure-page'>
-      <View className='insure-intro'>请准确填写以下信息，我们将按配置规则进行校验并保护您的个人信息。</View>
+      <View className='insure-intro'>请准确填写投保人和被保险人信息。</View>
       {productConfig.formIssues.length > 0 && <View className='insure-config-error'><Text>暂时无法投保</Text><Text>该产品的投保信息暂不可用，请联系客服后重试。</Text></View>}
       {importantNotices.map((notice) => <View className='read-important-notice' key={notice.id}>
         <Text className='read-important-title'>{notice.title}</Text>
-        {notice.contentType === 'text' ? notice.content.map((html, index) => <RichText className='read-important-paragraph' key={index} nodes={html} />) : <Button onClick={() => void openProductDocument(notice).catch(() => undefined)}>查看文件</Button>}
+        {notice.contentType === 'text' ? notice.content.map((html, index) => <RichText className='read-important-paragraph' key={index} nodes={html} />) : <Button className='ui-secondary-button' hoverClass='ui-button-hover' onClick={() => void openProductDocument(notice).catch(() => undefined)}>查看文件</Button>}
       </View>)}
       {productConfig.fieldGroups.map((group) => (
         <View className='form-section' key={group.id}>
@@ -241,7 +245,7 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
                 updateValue(multiSelectField.id, multiSelectField.options.filter((item) => next.has(item)).join('、'))
               }}><Text>{option}</Text><Text className={selected ? 'multi-check selected' : 'multi-check'}>{selected ? '✓' : ''}</Text></View>
             })}
-            <Button className='multi-done' onClick={() => setMultiSelectField(null)}>确定</Button>
+            <Button className='multi-done ui-primary-button' hoverClass='ui-button-hover' onClick={() => setMultiSelectField(null)}>确定</Button>
           </View>
         </View>
       )}
@@ -259,7 +263,7 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
             <ScrollView key={currentRead.id} className='read-content' scrollY onScrollToLower={() => setScrolledToEnd(true)} lowerThreshold={12}>
               <View className='read-document-body'>
                 <Text className='read-content-title'>{currentRead.title}</Text>
-                {currentRead.contentType === 'text' ? currentRead.content.map((paragraph, index) => <RichText className='read-paragraph' key={index} nodes={paragraph} />) : <Button onClick={async () => {
+                {currentRead.contentType === 'text' ? currentRead.content.map((paragraph, index) => <RichText className='read-paragraph' key={index} nodes={paragraph} />) : <Button className='ui-secondary-button' hoverClass='ui-button-hover' onClick={async () => {
                   try {
                     await openProductDocument(currentRead)
                     setOpenedDocuments((items) => [...items.filter((id) => id !== currentRead.id), currentRead.id])

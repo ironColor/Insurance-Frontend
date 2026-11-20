@@ -59,7 +59,7 @@ export default function MinePage() {
 
   const openAvatar = () => {
     if (!hasProfileUserId()) {
-      Taro.showToast({ title: '服务端未返回用户标识，暂无法修改头像', icon: 'none' })
+      Taro.showToast({ title: '头像暂时无法修改，请稍后重试', icon: 'none' })
       return
     }
     Taro.navigateTo({ url: '/pages/avatar/index' })
@@ -116,7 +116,7 @@ export default function MinePage() {
             <Text className='mine-menu-name'>关于我们</Text>
             <Text className='mine-menu-arrow'>›</Text>
           </View>
-          <View className='mine-menu-row' onClick={() => Taro.showToast({ title: '客服电话配置中', icon: 'none' })}>
+          <View className='mine-menu-row' onClick={() => Taro.showToast({ title: '客服暂时无法接通，请稍后重试', icon: 'none' })}>
             <View className='mine-menu-icon menu-orange'>话</View>
             <Text className='mine-menu-name'>客服电话</Text>
             <Text className='mine-menu-arrow'>›</Text>

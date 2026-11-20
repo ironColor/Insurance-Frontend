@@ -19,6 +19,12 @@ export default defineAppConfig({
     'pages/qr-expired/index'
   ],
   lazyCodeLoading: 'requiredComponents',
+  networkTimeout: {
+    request: 60000,
+    uploadFile: 60000,
+    downloadFile: 60000,
+    connectSocket: 60000
+  },
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
