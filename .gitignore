@@ -9,3 +9,6 @@ project.private.config.json
 *.test.ts
 *.cjs
 !scripts/test-order.cjs
+!scripts/test-product.cjs
+!tests/home.test.ts
+!tests/product-intro.test.ts

@@ -2,7 +2,9 @@ import { Button, Image, RichText, ScrollView, Swiper, SwiperItem, Text, Video, V
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useEffect, useState } from 'react'
 
+import CurrentRegion from '../../components/current-region'
 import { useProductConfig } from '../../hooks/use-product'
+import { defaultProductAgreements } from '../../services/default-product-agreements'
 import type { ProductDocument } from '../../services/product'
 import { openProductDocument } from '../../services/product-document'
 import { buildProductUrl } from '../../services/product-entry'
@@ -36,7 +38,7 @@ export default function ProductIntroPage() {
   const hasVideo = pageConfig.media.mode === 'video' && Boolean(pageConfig.media.videoUrl) && !videoFailed
   const images = pageConfig.media.images || []
   const hasImages = pageConfig.media.mode === 'images' && images.length > 0
-  const canStart = pageConfig.agreements.length === 0 || agreementAccepted
+  const agreements = pageConfig.agreements.length ? pageConfig.agreements : defaultProductAgreements
 
   const callService = () => {
     const phoneNumber = config.servicePhone.replace(/[\s-]/g, '')
@@ -53,7 +55,7 @@ export default function ProductIntroPage() {
   }
 
   const startInsuring = () => {
-    if (!canStart) return
+    if (!agreementAccepted) return
     void Taro.navigateTo({ url: buildProductUrl('/pages/plan/index', config.id, shareUser) })
   }
 
@@ -61,10 +63,7 @@ export default function ProductIntroPage() {
     <View className='product-intro-page'>
       <View className='custom-navigation'>
         <View className='navigation-safe-area' />
-        <View className='location-bar'>
-          <View className='location-mark'><View className='location-dot' /></View>
-          <Text className='location-name'>{pageConfig.location || config.title}</Text>
-        </View>
+        <CurrentRegion />
       </View>
 
       <View className='page-content'>
@@ -145,20 +144,20 @@ export default function ProductIntroPage() {
       </View>
 
       <View className='fixed-action-bar'>
-        {pageConfig.agreements.length > 0 && <View className='agreement-area'>
+        <View className='agreement-area'>
           <View className={`agreement-checkbox ${agreementAccepted ? 'agreement-checkbox-checked' : ''}`} onClick={() => setAgreementAccepted((value) => !value)}>
             {agreementAccepted && <Text className='agreement-checkmark'>✓</Text>}
           </View>
           <Text className='agreement-prefix'>我已阅读并同意</Text>
           <View className='agreement-links'>
-            {pageConfig.agreements.map((agreement, index) => (
+            {agreements.map((agreement, index) => (
               <Text key={agreement.id} className='agreement-link' onClick={() => showAgreement(agreement)}>
-                《{agreement.title}》{index < pageConfig.agreements.length - 1 ? '、' : ''}
+                《{agreement.title}》{index < agreements.length - 1 ? '、' : ''}
               </Text>
             ))}
           </View>
-        </View>}
-        <Button className={`start-button ${canStart ? 'start-button-enabled' : ''}`} disabled={!canStart} onClick={startInsuring}>开始投保</Button>
+        </View>
+        <Button className={`start-button ${agreementAccepted ? 'start-button-enabled' : ''}`} disabled={!agreementAccepted} onClick={startInsuring}>开始投保</Button>
         {pageConfig.companySlogan && <Text className='company-slogan'>{pageConfig.companySlogan}</Text>}
       </View>
 

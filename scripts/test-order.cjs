@@ -5,7 +5,8 @@ const vm = require('node:vm')
 const ts = require('typescript')
 function load(file, modules) {
   const exports = {}
-  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, { exports, require(name) { if (!(name in modules)) throw Error(`Unexpected dependency ${name}`); return modules[name] } })
+  // Page and service modules share Error in the mini-program, also across these test VM contexts.
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, { exports, Error, require(name) { if (!(name in modules)) throw Error(`Unexpected dependency ${name}`); return modules[name] } })
   return exports
 }
 function setup() {
@@ -77,6 +78,27 @@ test('known state gates, legacy migration and manual refund recovery', () => {
   assert.equal(s.safety.pendingBlockReason('O2', 'refund'), '')
   const alive = s.safety.createLifecycleGuard().capture(); s.user('user-2'); assert.equal(alive(), false)
 })
+test('主险必选：优先可见默认方案，否则选排序第一项；附加险仍按配置选择', () => {
+  const { normalizeProductConfig, createDefaultSelections, calculatePremium } = load('src/services/product-normalize.ts', {})
+  for (const hasDefault of [false, true]) {
+    const config = normalizeProductConfig({ productId: 'demo', planGroupList: [
+      { groupId: 'main', groupName: '主险', classify: hasDefault ? 1 : '1', required: '0', planList: [
+        { planId: 'hidden', visible: '0', isDefault: '1', sort: 0, price: 1 },
+        { planId: 'plus', isDefault: hasDefault, sort: 2, price: 160 },
+        { planId: 'basic', sort: 1, price: 120 }
+      ] },
+      { groupId: 'extra', classify: '2', required: '0', planList: [{ planId: 'opt', price: 20 }] },
+      { groupId: 'requiredExtra', classify: 2, required: '1', planList: [{ planId: 'fixed', price: 10 }] }
+    ] })
+    const selected = createDefaultSelections(config)
+    assert.deepEqual(Array.from(config.products, group => group.required), [true, false, true])
+    assert.deepEqual({ ...selected }, { main: hasDefault ? 'plus' : 'basic', extra: null, requiredExtra: 'fixed' })
+    assert.equal(calculatePremium(config, selected), hasDefault ? 170 : 130)
+    assert.equal(calculatePremium(config, { ...selected, main: 'basic', extra: 'opt' }), 150)
+    assert.throws(() => calculatePremium(config, { ...selected, main: null }), /请选择主险/)
+  }
+})
+
 test('new order serialization uses metadata, selected plans, integer cents and recoverable identity', () => {
   const storage = new Map(); let userId = 'u1'
   const normalize = load('src/services/product-normalize.ts', {})
@@ -86,6 +108,8 @@ test('new order serialization uses metadata, selected plans, integer cents and r
   const draft = { productId: 'p1', productConfig: config, selectedPlans: { a: 'a', b: 'b' }, formValues: { f: 'SYNTHETIC' } }
   const modules = { '@tarojs/taro': { getStorageSync: k => storage.get(k), setStorageSync: (k,v) => storage.set(k,v), removeStorageSync: k => storage.delete(k) }, './session': { getAuthSession: () => ({ userId }) }, './product-normalize': normalize, './product': { INSURANCE_DRAFT_KEY: 'draft' } }
   const service = load('src/services/order-draft.ts', modules)
+  const legacyConfig = { ...config, products: [{ ...config.products[0], required: false }, config.products[1]] }
+  assert.throws(() => service.newOrderRequest({ ...draft, productConfig: legacyConfig, selectedPlans: { a: null, b: 'b' } }, '1'), /请选择a的投保方案/)
   const request = service.newOrderRequest(draft, '1'); assert.equal(request.amount, 0.3); assert.equal(request.orderNo, undefined)
   const data = JSON.parse(request.orderData); assert.equal(data.blockConfigList[0].fieldConfig.englishKey, 'SYNTHETIC'); assert.equal(data.planGroupList[0].planList.length, 1)
   const key = service.creationKey('p1'); service.beginCreation(key)
@@ -180,23 +204,28 @@ test('cancel uses documented GET; refund states mapped only documented values', 
   assert.match(s.order.orderStatus({ orderNo: '1', payStatus: '1' }), /支付状态：1/); assert.equal(s.order.money(undefined), '待服务端确认')
 })
 
-function ordersPageSetup() {
-  const slots = []; const calls = []; let cursor = 0; let didShow
+function renderOrderPage(path, modules) {
+  const slots = []; let cursor = 0; let didShow
   const react = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === 'function' ? value(slots[i]) : value }] },
     useRef(initial) { const i = cursor++; if (!(i in slots)) slots[i] = { current: initial }; return slots[i] }
   }
   const jsx = (type, props) => ({ type, props })
-  const Page = load('src/pages/orders/index.tsx', {
+  const Page = load(path, {
     react, 'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
     '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', Button: 'Button' },
-    '@tarojs/taro': { useDidShow: fn => { didShow = fn } },
     '../../hooks/use-order-lifecycle': { useOrderLifecycle: () => ({ capture: () => () => true }) },
-    '../../services/order': { fetchOrders: (page, keyword) => new Promise((resolve, reject) => calls.push({ page, keyword, resolve, reject })), loadOrderDictionaries: async () => {}, message: e => e.message, money: v => `¥${v}` },
-    './index.css': {}
+    './index.css': {}, ...modules,
+    '@tarojs/taro': { ...modules['@tarojs/taro'], useDidShow: fn => { didShow = fn } }
   }).default
   const render = () => { cursor = 0; return Page() }
-  return { calls, render, show: () => didShow() }
+  return { render, show: () => didShow() }
+}
+function ordersPageSetup() {
+  const calls = []
+  return { calls, ...renderOrderPage('src/pages/orders/index.tsx', {
+    '../../services/order': { fetchOrders: (page, keyword) => new Promise((resolve, reject) => calls.push({ page, keyword, resolve, reject })), loadOrderDictionaries: async () => {}, message: e => e.message, money: v => `¥${v}` }
+  }) }
 }
 function pageNodes(node) {
   if (Array.isArray(node)) return node.flatMap(pageNodes)
@@ -209,6 +238,50 @@ function pageText(node) {
   return typeof node === 'string' || typeof node === 'number' ? String(node) : ''
 }
 const tick = () => new Promise(resolve => setImmediate(resolve))
+
+async function checkoutFixture(options = {}) {
+  const calls = []; const redirects = []; let creation; let orderReads = 0
+  const isDraft = !!options.newOrder
+  const order = load('src/services/order.ts', {
+    '@tarojs/taro': { requestPayment: async () => { calls.push('wx.requestPayment') } },
+    './api': { apiRequest: async (path, method, request) => {
+      calls.push(path)
+      if (path.startsWith('/pay/channelList/')) return [{ id: 'wx1', status: '0', name: '微信支付' }]
+      if (path.startsWith('/order/getOrderByOrderNo/')) {
+        orderReads++; return { productId: 'P', orderNo: 'O1', orderStatus: 'NOTPAY', payAmount: orderReads > 1 && options.priceChange ? '161.00' : '160.00', orderData: '{}', productTitle: '测试产品' }
+      }
+      if (path === '/pay/validBeforePay') { assert.equal(request.channel, 'wx1'); assert.equal(request.amount, 160); assert.equal(request.orderNo, isDraft ? undefined : 'O1'); return { code: 200, msg: null } }
+      if (path === '/pay/prepay') { if (options.timeout) throw Error('测试超时'); return pay }
+      throw Error('意外请求：' + path)
+    } }
+  })
+  const page = renderOrderPage('src/pages/payment/index.tsx', {
+    '@tarojs/taro': { useRouter: () => ({ params: isDraft ? { productId: 'P' } : { orderNo: 'O1' } }), getStorageSync: () => ({ productId: 'P', productConfig: { title: '测试产品' } }), redirectTo: async ({ url }) => { redirects.push(url) } },
+    '../../services/order': order, '../../services/order-safety': safetySetup().safety, '../../services/product': { INSURANCE_DRAFT_KEY: 'draft' },
+    '../../services/order-draft': { creationKey: () => 'test-key', readCreation: () => creation, draftVersion: () => 'v1', newOrderRequest: (_, channel) => ({ amount: 160, subject: '测试产品', channel, method: '4' }), beginCreation: () => { assert.equal(creation, undefined); creation = { state: 'pending' } }, persistCreation: (_, v) => { creation = v } }
+  })
+  page.render(); page.show(); await tick()
+  const buttons = () => pageNodes(page.render()).filter(n => n.type === 'Button')
+  return { ...page, calls, redirects, buttons }
+}
+for (const newOrder of [false, true]) test(`支付页${newOrder ? '新单' : '续付'}：仅一个微信支付入口，一次点击调起原生支付，连点不重复`, async () => {
+  const s = await checkoutFixture({ newOrder }); assert.equal(s.buttons().length, 1)
+  const button = s.buttons()[0]; assert.match(pageText(button), /微信支付.*160\.00/)
+  assert.ok(!s.calls.includes('/pay/prepay')); const first = button.props.onClick(); await button.props.onClick(); await first
+  assert.equal(s.calls.filter(p => p === '/pay/prepay').length, 1); assert.equal(s.calls.filter(p => p === 'wx.requestPayment').length, 1)
+  assert.deepEqual(s.redirects, ['/pages/pay-result/index?orderNo=O1&outcome=submitted'])
+})
+test('支付页：金额变更停止付款，请用户重新核对', async () => {
+  const s = await checkoutFixture({ priceChange: true }); await s.buttons()[0].props.onClick()
+  assert.match(pageText(s.render()), /应付金额已更新/); assert.deepEqual(s.buttons().map(pageText), ['重新加载'])
+  assert.ok(!s.calls.includes('/pay/prepay')); assert.ok(!s.calls.includes('wx.requestPayment'))
+})
+test('支付页：新单预支付超时只提供核对订单入口，再次进入不重新创建', async () => {
+  const s = await checkoutFixture({ newOrder: true, timeout: true }); await s.buttons()[0].props.onClick()
+  assert.deepEqual(s.buttons().map(pageText), ['查看我的订单']); s.show(); await tick()
+  assert.deepEqual(s.buttons().map(pageText), ['查看我的订单']); assert.equal(s.calls.filter(p => p === '/pay/prepay').length, 1)
+  assert.ok(!s.calls.includes('wx.requestPayment'))
+})
 test('order page first paint and searching use centered loading, then styled empty/error states', async () => {
   const s = ordersPageSetup(); let tree = s.render()
   assert.match(pageText(pageNodes(tree).find(n => n.props.className === 'orders-state')), /正在查询订单/)

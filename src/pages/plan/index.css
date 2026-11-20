@@ -85,6 +85,7 @@
   justify-content: center;
   width: 50px;
   height: 50px;
+  flex-shrink: 0;
   border-radius: 15px;
   color: #fff;
   background: linear-gradient(145deg,#56b5ed,#338dde);
@@ -92,27 +93,39 @@
   font-weight: 700;
 }
 
-.insurance-title-wrap {
-  display: flex;
+.insurance-title {
   min-width: 0;
   margin-left: 16px;
   flex: 1;
-  flex-direction: column;
-}
-
-.insurance-title {
+  overflow-wrap: anywhere;
   color: #263953;
   font-size: 31px;
   font-weight: 700;
 }
 
+.insurance-heading-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 50%;
+  margin-left: 16px;
+}
+
 .insurance-company {
-  margin-top: 6px;
+  min-width: 0;
+  margin-left: 10px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #8a98a8;
   font-size: 20px;
 }
 
 .insurance-type {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 7px 15px;
   border-radius: 18px;
   color: #388bca;

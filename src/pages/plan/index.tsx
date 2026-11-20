@@ -83,11 +83,11 @@ function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfi
             <View className='insurance-card' key={product.id}>
               <View className='insurance-heading'>
                 <Text className='insurance-number'>{String(productIndex + 1).padStart(2, '0')}</Text>
-                <View className='insurance-title-wrap'>
-                  <Text className='insurance-title'>{product.name}</Text>
+                <Text className='insurance-title'>{product.name}</Text>
+                <View className='insurance-heading-meta'>
+                  <Text className={`insurance-type ${product.required ? '' : 'insurance-type-extra'}`}>{product.type}</Text>
                   <Text className='insurance-company'>承保：{product.company}</Text>
                 </View>
-                <Text className={`insurance-type ${product.required ? '' : 'insurance-type-extra'}`}>{product.type}</Text>
               </View>
 
               <View className='plan-tabs'>

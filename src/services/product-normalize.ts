@@ -178,6 +178,9 @@ function fields(value: unknown, groupName: string, issues: string[], used: Set<s
   })
 }
 
+// 主险始终选一份；只有附加险的必选性取决于后台开关。
+const requiresPlan = (type: ProductItem['type'], required: boolean) => type === '主险' || required
+
 export function normalizeProductConfig(value: unknown, expectedProductId?: string): ProductConfig {
   if (value == null) throw new ProductUnavailableError()
   if (!record(value)) throw new Error('产品配置格式异常，请稍后重试')
@@ -195,12 +198,13 @@ export function normalizeProductConfig(value: unknown, expectedProductId?: strin
       }))
     }))
     if (!plans.length) throw new Error(`“${text(group.groupName) || '产品方案组'}”暂无可用方案，请联系管理员`)
-    const required = yes(group.required)
+    const type = group.classify === '2' || group.classify === 2 ? '附加险' : '主险'
+    const required = requiresPlan(type, yes(group.required))
     const selected = plans.find((plan) => plan.isDefault)
     return {
       id: identity(group, 'groupId', '产品方案组', groupIds), name: text(group.groupName),
       classify: text(group.classify), description: text(group.groupDesc), sort: Number(group.sort) || 0,
-      type: group.classify === '2' || group.classify === 2 ? '附加险' : '主险', company: text(group.insCompanyName ?? value.insCompanyName), required,
+      type, company: text(group.insCompanyName ?? value.insCompanyName), required,
       defaultPlanId: selected?.id ?? (required || yes(group.isDefault) ? plans[0].id : null), plans
     }
   })
@@ -268,7 +272,7 @@ export function calculatePremium(config: ProductConfig, selections: SelectedPlan
     const plan = getSelectedPlan(product, selections)
     if (selected != null && !plan) throw new Error('所选方案已失效，请重新选择')
     if (!plan) {
-      if (product.required) throw new Error(`请选择${product.name}的投保方案`)
+      if (requiresPlan(product.type, product.required)) throw new Error(`请选择${product.name}的投保方案`)
       continue
     }
     totalCents += Math.round(price(plan.premium, plan.name) * 100)

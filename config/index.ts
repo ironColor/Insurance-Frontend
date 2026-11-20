@@ -26,7 +26,6 @@ const config: UserConfigExport<'vite'> = {
     enable: false
   },
   plugins: [],
-  defineConstants: {},
   copy: {
     patterns: [],
     options: {}
