@@ -26,13 +26,12 @@
 }
 .payment-primary + .payment-primary { margin-top: 16px; }
 .payment-primary[disabled], .payment-state-action[disabled] { color: #fff; background: #8eb5e4; box-shadow: none; }
-.payment-primary::after, .payment-state-action::after, .payment-text-button::after { border: 0; }
+.payment-primary::after, .payment-state-action::after { border: 0; }
 .payment-hover { opacity: .85; }
 .payment-caption, .payment-channel-hint { display: block; color: #788ba1; font-size: 23px; line-height: 1.6; }
 .payment-caption { margin-top: 20px; text-align: center; }
 .payment-channel-hint { margin: 0 6px 14px; }
-.payment-restored { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 28px; color: #788ba1; font-size: 22px; }
-.payment-text-button { margin: 0; padding: 10px 14px; color: #347eca; background: transparent; font-size: 23px; line-height: 1.6; }
+
 .payment-state { display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 55vh; padding: 44px 24px; text-align: center; }
 .payment-state-mark { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; color: #407fc3; background: #e0edfd; font-size: 42px; font-weight: 600; }
 .payment-state-title { margin-top: 24px; font-size: 30px; font-weight: 600; }

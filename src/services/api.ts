@@ -14,6 +14,13 @@ export class ApiError extends Error {
   }
 }
 
+export class LoginRequiredError extends ApiError {
+  constructor(message: string, code?: number, statusCode?: number) {
+    super(message, code, statusCode)
+    this.name = 'LoginRequiredError'
+  }
+}
+
 function authHeader(session: AuthSession): Record<string, string> {
   const token = session.headerName.toLowerCase() === 'wx-authorization' && !/^Bearer\s/i.test(session.token)
     ? `Bearer ${session.token}`
@@ -21,14 +28,21 @@ function authHeader(session: AuthSession): Record<string, string> {
   return { [session.headerName]: token }
 }
 
-export function unwrapResponse<T>(body: ApiResponse<T> | string, statusCode: number): T {
+function requireLoginOnRejection(body: unknown, statusCode: number, requestSession: AuthSession | null): void {
+  const payload = body && typeof body === 'object' && !Array.isArray(body) ? body as ApiResponse<unknown> : undefined
+  const { code, msg } = payload ?? {}
+  // 兼容后端旧约定：只有明确的未登录文案才将业务 500 识别为鉴权失败。
+  const legacyLoginRejection = code === 500 && typeof msg === 'string' && msg.trim() === '请先登录'
+  if (statusCode !== 401 && statusCode !== 403 && code !== 401 && code !== 403 && !legacyLoginRejection) return
+  const currentSession = getAuthSession()
+  if (requestSession && currentSession?.token === requestSession.token && currentSession.userId === requestSession.userId) clearAuthSession()
+  throw new LoginRequiredError('请先登录或重新登录', code, statusCode)
+}
+
+export function unwrapResponse<T>(body: ApiResponse<T> | string, statusCode: number, session = getAuthSession()): T {
+  requireLoginOnRejection(body, statusCode, session)
   if (body == null || (typeof body !== 'string' && (typeof body !== 'object' || Array.isArray(body)))) {
-    if (statusCode === 401 || statusCode === 403) clearAuthSession()
     throw new ApiError('服务返回内容异常', undefined, statusCode)
-  }
-  if (statusCode === 401 || statusCode === 403 || (typeof body !== 'string' && (body.code === 401 || body.code === 403))) {
-    clearAuthSession()
-    throw new ApiError(typeof body === 'string' ? body || '登录已失效，请重新登录' : body.msg || '登录已失效，请重新登录', typeof body === 'string' ? undefined : body.code, statusCode)
   }
   if (statusCode < 200 || statusCode >= 300) {
     throw new ApiError(typeof body === 'string' ? body : body.msg || `服务请求失败（${statusCode}）`, typeof body === 'string' ? undefined : body.code, statusCode)
@@ -47,7 +61,7 @@ export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT'
     data,
     dataType: 'text',
     responseType: 'text',
-    timeout: 15000,
+    timeout: 30000,
     header: {
       'Content-Type': 'application/json',
       ...(session ? authHeader(session) : {})
@@ -62,14 +76,13 @@ export async function apiRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT'
     }
   }
   if (shape !== 'data') {
-    if (response.statusCode < 200 || response.statusCode >= 300 || (body && typeof body === 'object' && (body.code === 401 || body.code === 403))) {
-      return unwrapResponse(body, response.statusCode)
-    }
+    requireLoginOnRejection(body, response.statusCode, session)
+    if (response.statusCode < 200 || response.statusCode >= 300) return unwrapResponse(body, response.statusCode, session)
     if (!body || typeof body !== 'object') throw new ApiError('服务返回内容异常')
     if (shape === 'raw' && !Array.isArray(body) && body.code !== undefined && body.code !== 200) throw new ApiError(body.msg || '服务请求失败', body.code, response.statusCode)
     return body as T
   }
-  return unwrapResponse(body, response.statusCode)
+  return unwrapResponse(body, response.statusCode, session)
 }
 
 export async function apiUpload<T>(path: string, filePath: string): Promise<T> {
@@ -83,7 +96,7 @@ export async function apiUpload<T>(path: string, filePath: string): Promise<T> {
     header: authHeader(session)
   })
   if (response.statusCode === 401 || response.statusCode === 403) {
-    return unwrapResponse<T>(response.data, response.statusCode)
+    return unwrapResponse<T>(response.data, response.statusCode, session)
   }
   let body: ApiResponse<T>
   try {
@@ -91,5 +104,5 @@ export async function apiUpload<T>(path: string, filePath: string): Promise<T> {
   } catch {
     throw new Error('上传服务返回内容异常')
   }
-  return unwrapResponse(body, response.statusCode)
+  return unwrapResponse(body, response.statusCode, session)
 }

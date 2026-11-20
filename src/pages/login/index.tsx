@@ -1,5 +1,5 @@
 import { Button, Checkbox, CheckboxGroup, Image, Label, Text, View } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useRouter } from '@tarojs/taro'
 import { useEffect, useRef, useState } from 'react'
 
 import loginLogo from '../../assets/images/login-logo.jpg'
@@ -16,11 +16,21 @@ export default function LoginPage() {
   const loginPending = useRef(false)
   const pageActive = useRef(true)
   const loginSequence = useRef(0)
+  const { returnToPayment } = useRouter().params
+
+  const finishLogin = () => {
+    // 只返回栈内的支付页，不接收任意回跳地址。支付页 onShow 仅查询状态。
+    if (returnToPayment === '1' && Taro.getCurrentPages().slice(-2, -1)[0]?.route === 'pages/payment/index') {
+      void Taro.navigateBack()
+    } else {
+      void Taro.reLaunch({ url: getLoginDestination() })
+    }
+  }
 
   useEffect(() => {
     pageActive.current = true
     if (hasAuthSession()) {
-      Taro.reLaunch({ url: getLoginDestination() })
+      finishLogin()
     }
     return () => {
       pageActive.current = false
@@ -95,7 +105,7 @@ export default function LoginPage() {
       })
       if (!isActiveRun()) return
 
-      Taro.reLaunch({ url: getLoginDestination() })
+      finishLogin()
     } catch (error) {
       if (!isActiveRun()) return
       console.error('微信登录失败', error)

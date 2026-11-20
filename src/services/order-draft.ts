@@ -3,7 +3,7 @@ import { calculatePremium, getSelectedPlan, isProductConfigSnapshot } from './pr
 import { INSURANCE_DRAFT_KEY } from './product'
 import type { InsuranceDraft } from './product-types'
 import type { PayRequest } from './order'
-import { getAuthSession } from './session'
+
 
 export function newOrderRequest(draft: InsuranceDraft, channel: string): PayRequest {
   const config = draft?.productConfig
@@ -35,26 +35,5 @@ export function newOrderRequest(draft: InsuranceDraft, channel: string): PayRequ
     orderData: JSON.stringify({ productId: config.id, productName: config.title, planGroupList, blockConfigList }) }
 }
 
-// One outstanding creation per account and product. Never store form data or payment signatures here.
-export function creationKey(productId: string): string {
-  const user = getAuthSession()?.userId
-  if (!user) throw new Error('请先登录后支付')
-  return `insurance-create:v2:${encodeURIComponent(user)}:${encodeURIComponent(productId)}`
-}
-export type Creation = { state: 'pending' | 'known'; orderNo?: string }
-export function readCreation(key: string): Creation | undefined { return Taro.getStorageSync(key) || undefined }
-export function persistCreation(key: string, value: Creation) {
-  Taro.setStorageSync(key, value)
-  const saved = readCreation(key)
-  if (saved?.state !== value.state || saved.orderNo !== value.orderNo) throw new Error('无法保存订单恢复记录，已停止支付，请查询我的订单')
-}
-export function beginCreation(key: string) {
-  if (readCreation(key)) throw new Error('已有下单记录，请先查询订单，勿重复创建')
-  persistCreation(key, { state: 'pending' })
-}
-export function releaseKnownCreation(key: string, orderNo: string) {
-  const saved = readCreation(key)
-  if (saved?.state !== 'known' || saved.orderNo !== orderNo) throw new Error('未知下单结果不能清除，请联系客服核实')
-  Taro.removeStorageSync(key)
-}
+
 export function draftVersion(): string { return JSON.stringify(Taro.getStorageSync(INSURANCE_DRAFT_KEY) || null) }

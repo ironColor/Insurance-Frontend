@@ -28,8 +28,12 @@ export default function ProductIntroPage() {
       <View className='product-intro-state'>
         <Text className='product-intro-state-title'>{loading ? '正在加载产品信息…' : '产品信息加载失败'}</Text>
         {!loading && <Text>{error}</Text>}
-        {!loading && <Button onClick={reload}>重新加载</Button>}
-        {!loading && <Button onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>}
+        {!loading && (
+          <View className='product-intro-state-actions'>
+            <Button className='product-intro-state-button product-intro-state-primary' hoverClass='product-intro-state-hover' onClick={reload}>重新加载</Button>
+            <Button className='product-intro-state-button product-intro-state-secondary' hoverClass='product-intro-state-hover' onClick={() => Taro.reLaunch({ url: '/pages/home/index' })}>返回首页</Button>
+          </View>
+        )}
       </View>
     )
   }

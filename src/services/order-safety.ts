@@ -50,13 +50,18 @@ export function reconcileRefund(order: ServerOrder): void {
 export function createLifecycleGuard() {
   let generation = 0
   let active = true
+  const capturePage = () => {
+    const ticket = generation
+    return () => active && ticket === generation
+  }
   return {
     activate() { if (!active) { generation++; active = true } },
     dispose() { generation++; active = false },
+    capturePage,
     capture() {
-      const ticket = generation
+      const pageActive = capturePage()
       const session = getAuthSession()
-      return () => active && ticket === generation && getAuthSession()?.userId === session?.userId && getAuthSession()?.token === session?.token
+      return () => pageActive() && getAuthSession()?.userId === session?.userId && getAuthSession()?.token === session?.token
     }
   }
 }

@@ -69,7 +69,7 @@ export function paymentParameters(result: PayResponse) {
   if (![result.timeStamp, result.nonceStr, result.packageStr, result.paySign].every(value => typeof value === 'string' && value.trim()) || !['RSA', 'MD5', 'HMAC-SHA256'].includes(result.signType || '')) throw new Error('支付参数不完整，请查询订单后再操作')
   return { timeStamp: result.timeStamp!, nonceStr: result.nonceStr!, package: result.packageStr!, signType: result.signType as 'RSA' | 'MD5' | 'HMAC-SHA256', paySign: result.paySign! }
 }
-export async function prepay(request: PayRequest, confirmWarning: (text: string) => Promise<boolean>, isActive: () => boolean = () => true, beforeDispatch: () => void = () => {}, onResponse: (result: PayResponse) => void = () => {}): Promise<PayResponse | null> {
+export async function prepay(request: PayRequest, confirmWarning: (text: string) => Promise<boolean>, isActive: () => boolean = () => true, beforeDispatch: () => void = () => {}): Promise<PayResponse | null> {
   if (!isActive()) return null
   if (!Number.isFinite(request.amount) || request.amount < 0 || !request.subject.trim() || !request.channel) throw new Error('支付金额、主题或渠道缺失')
   const validation = await apiRequest<ApiResponse<unknown>>('/pay/validBeforePay', 'POST', request, 'validation')
@@ -82,9 +82,7 @@ export async function prepay(request: PayRequest, confirmWarning: (text: string)
   }
   if (!isActive()) return null
   beforeDispatch()
-  const result = await apiRequest<PayResponse>('/pay/prepay', 'POST', request)
-  onResponse(result) // persist identity even if the page was unloaded while the request was in flight
-  return result
+  return apiRequest<PayResponse>('/pay/prepay', 'POST', request)
 }
 export async function invokePayment(result: PayResponse): Promise<'cancelled' | 'submitted' | 'unknown'> {
   const parameters = paymentParameters(result)
