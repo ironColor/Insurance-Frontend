@@ -151,7 +151,7 @@ function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfi
       </View>
 
       {morePlans && <View className='sheet-mask' onClick={() => setMorePlans(null)}>
-        <View className='detail-sheet' onClick={(event) => event.stopPropagation()}>
+        <View className='detail-sheet detail-sheet-scrollable' onClick={(event) => event.stopPropagation()}>
           <View className='sheet-header'><Text className='sheet-title'>{morePlans.name} · 更多方案</Text><View className='sheet-close' onClick={() => setMorePlans(null)}>×</View></View>
           <ScrollView className='sheet-content' scrollY>
             {morePlans.plans.slice(2).map((plan) => <Button key={plan.id} className='extra-plan-option' onClick={() => { choosePlan(morePlans.id, plan.id); setMorePlans(null) }}><Text>{plan.name}</Text><Text>¥{plan.premium.toFixed(2)}</Text></Button>)}
@@ -161,9 +161,9 @@ function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfi
 
       {detail && (
         <View className='sheet-mask' onClick={() => setDetail(null)}>
-          <View className='detail-sheet' onClick={(event) => event.stopPropagation()}>
+          <View className='detail-sheet detail-sheet-scrollable' onClick={(event) => event.stopPropagation()}>
             <View className='sheet-header'>
-              <View>
+              <View className='sheet-heading'>
                 <Text className='sheet-title'>{detail.product.name} - {detail.plan.name}</Text>
                 <Text className='sheet-subtitle'>责任保障详情</Text>
               </View>
@@ -201,7 +201,7 @@ function PlanContent({ productConfig, shareUser }: { productConfig: ProductConfi
 
       {noticeVisible && (
         <View className='sheet-mask' onClick={() => setNoticeVisible(false)}>
-          <View className='detail-sheet notice-sheet' onClick={(event) => event.stopPropagation()}>
+          <View className='detail-sheet detail-sheet-scrollable notice-sheet' onClick={(event) => event.stopPropagation()}>
             <View className='sheet-header'>
               <Text className='sheet-title'>投保须知</Text>
               <View className='sheet-close' onClick={() => setNoticeVisible(false)}>×</View>

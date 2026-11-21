@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react'
 import { useDidHide, useDidShow, useUnload, useRouter } from '@tarojs/taro'
-import { fetchOrder, fetchOrderById, loadOrderDictionaries, message, ServerOrder } from '../services/order'
+import { fetchOrder, fetchOrderById, loadOrderDictionaries, loadRefundDictionaries, message, ServerOrder } from '../services/order'
 import { reconcileRefund } from '../services/order-safety'
 import { useOrderLifecycle } from './use-order-lifecycle'
 import { fetchOrderFieldLabels } from '../services/order-field-labels'
 import type { OrderFieldLabel } from '../services/order-detail'
 
-export function useOrder({ includeFieldLabels = false } = {}) {
+export function useOrder({ includeFieldLabels = false, includeRefundData = false } = {}) {
   const params = useRouter().params
   const [order, setOrder] = useState<ServerOrder | null>(null)
   const [error, setError] = useState('')
@@ -25,7 +25,7 @@ export function useOrder({ includeFieldLabels = false } = {}) {
     try {
       const result = params.orderNo ? await fetchOrder(params.orderNo) : params.id ? await fetchOrderById(params.id) : null
       if (!result) throw new Error('缺少服务端订单标识，请从我的订单重新进入')
-      await loadOrderDictionaries().catch(() => {}) // Raw codes and known labels remain available offline.
+      await Promise.all([loadOrderDictionaries().catch(() => {}), includeRefundData ? loadRefundDictionaries().catch(() => {}) : undefined])
       if (isActive()) { reconcileRefund(result); loadedFor.current = alive; setOrder(result) }
       if (includeFieldLabels && isActive()) {
         const labels = await fetchOrderFieldLabels(result).catch(() => [])

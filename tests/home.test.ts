@@ -90,7 +90,7 @@ test('卡片使用 productList，点击独立 Banner 按其绑定 ID 加载介�
   cards[0].props.onClick!()
   const banners = findAll(tree, 'hero-banner-image'); banners[0].props.onClick!(); banners[1].props.onClick!()
   assert.deepEqual(navigations, [`/pages/index/index?productId=${listId}`, `/pages/index/index?productId=${bannerId}`])
-  assert.deepEqual(notices, ['产品信息暂未配置'])
+  assert.deepEqual(notices, ['该产品暂不可用，请选择其他产品'])
   const target = new URL(navigations[1], 'https://local.invalid')
   const h = hooks()
   const { useProductConfig } = loadSourceModule<typeof import('../src/hooks/use-product')>('src/hooks/use-product.ts', {

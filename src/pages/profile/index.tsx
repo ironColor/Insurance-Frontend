@@ -50,11 +50,6 @@ export default function ProfilePage() {
 
   return (
     <View className='profile-page'>
-      <View className='profile-intro'>
-        <Text className='profile-intro-kicker'>账户资料</Text>
-        <Text className='profile-intro-title'>让服务更懂你</Text>
-        <Text className='profile-intro-description'>完善个人信息，便于管理保障与接收服务</Text>
-      </View>
       {!canEdit && <Text className='profile-unavailable'>个人信息暂时无法读取或修改，请稍后重试。</Text>}
       <Text className='profile-section-title'>基本信息</Text>
       <View className='profile-card'>

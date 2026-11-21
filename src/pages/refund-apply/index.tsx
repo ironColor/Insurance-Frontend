@@ -65,28 +65,28 @@ export default function RefundApplyPage() {
     <View className='refund-card'>
       <View className='refund-section-heading'><Text className='refund-heading'>退款原因</Text><Text className='refund-required'>必选</Text></View>
       {reasons.map(item => <Button className={`refund-choice${refundReason === item.dictValue ? ' refund-choice-selected' : ''}`} hoverClass='refund-button-hover' key={item.dictValue} disabled={busy} onClick={() => setRefundReason(item.dictValue)}>
-        <Text className='refund-choice-label'>{item.dictLabel}</Text><View className={`refund-radio${refundReason === item.dictValue ? ' selected' : ''}`}>{refundReason === item.dictValue ? '✓' : ''}</View>
+        <View className={`refund-radio${refundReason === item.dictValue ? ' selected' : ''}`}>{refundReason === item.dictValue ? '✓' : ''}</View><Text className='refund-choice-label'>{item.dictLabel}</Text>
       </Button>)}
       {reasonsLoading && <View className='refund-reasons-state'><View className='refund-spinner refund-spinner-small' /><Text>正在加载退款原因</Text></View>}
       {!reasonsLoading && !reasons.length && <View className='refund-reasons-empty'><Text>{reasonsError || '暂无可用退款原因，请稍后重试'}</Text><Button className='refund-secondary' hoverClass='refund-button-hover' disabled={busy} onClick={loadReasons}>重新加载原因</Button></View>}
     </View>
     <View className='refund-card'>
-      <View className='refund-section-heading'><Text className='refund-heading'>申请说明</Text><Text className='refund-optional'>选填</Text></View>
-      <Textarea className='refund-remark' maxlength={200} disabled={busy} value={remark} placeholder='请补充需要说明的情况' placeholderClass='refund-remark-placeholder' onInput={event => setRemark(event.detail.value)} />
+      <Text className='refund-heading'>退款收款账户</Text>
+      <View className='refund-account'><View className='refund-account-icon' /><View className='refund-account-copy'><Text className='refund-account-title'>原路返回</Text><Text className='refund-account-description'>退回原支付账户</Text></View></View>
+    </View>
+    <View className='refund-card'>
+      <Text className='refund-heading'>备注说明（选填）</Text>
+      <Textarea className='refund-remark' maxlength={200} disabled={busy} value={remark} placeholder='可填写补充说明' placeholderClass='refund-remark-placeholder' onInput={event => setRemark(event.detail.value)} />
       <Text className='refund-count'>{remark.length}/200</Text>
     </View>
-    <View className='refund-risk'><Text className='refund-risk-title'>退款须知</Text><Text>仅已支付且未超过保单生效时间可申请。退款申请需审核，提交后可在退款记录中查看处理进度。</Text></View>
-    <Button className='refund-agree' hoverClass='refund-button-hover' disabled={busy} onClick={() => setAccepted(!accepted)}>
-      <View className={`refund-checkbox${accepted ? ' selected' : ''}`}>{accepted ? '✓' : ''}</View><Text>我已阅读并确认退款须知</Text>
-    </Button>
-    {result && <View className='refund-feedback'>{result}</View>}
-    {blockReason && <View className='refund-feedback'>{blockReason}</View>}
-    <View className='refund-actions'>
-      <Button className='refund-submit' hoverClass='refund-button-hover' disabled={busy || loading || reasonsLoading || !accepted || !refundReason || !!blockReason} loading={busy} onClick={submit}>提交退款申请</Button>
-      <View className='refund-secondary-actions'>
-        <Button className='refund-secondary' hoverClass='refund-button-hover' disabled={busy || loading} onClick={reload}>刷新订单</Button>
-        <Button className='refund-secondary' hoverClass='refund-button-hover' disabled={busy} onClick={() => Taro.navigateTo({ url: `/pages/refund-status/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>退款记录</Button>
-      </View>
+    <View className='refund-risk'><Text className='refund-risk-icon'>⚠︎</Text><Text className='refund-risk-copy'><Text className='refund-risk-title'>风险须知：</Text>仅已支付且未超过保单生效时间可申请。退款申请需审核，请确认申请信息无误后提交。</Text></View>
+    <View className='refund-card refund-actions'>
+      <Button className='refund-agree' hoverClass='refund-button-hover' disabled={busy} onClick={() => setAccepted(!accepted)}>
+        <View className={`refund-checkbox${accepted ? ' selected' : ''}`}>{accepted ? '✓' : ''}</View><Text className='refund-agree-copy'>本人已阅读并清楚知晓以上退款风险，<Text className='refund-agree-emphasis'>自愿申请退款</Text></Text>
+      </Button>
+      {result && <View className='refund-feedback'>{result}</View>}
+      {blockReason && <View className='refund-feedback'>{blockReason}</View>}
+      <Button className='refund-submit' hoverClass='refund-button-hover' disabled={busy || loading || reasonsLoading || !accepted || !refundReason || !!blockReason} loading={busy} onClick={submit}>提交退保退款申请</Button>
     </View>
   </View>
 }

@@ -1,14 +1,14 @@
 import Taro from '@tarojs/taro'
 import { apiRequest, ApiResponse } from './api'
 
-export type RefundRecord = { refundNo?: string; refundStatus?: string; refundAmount?: number | string; refundTime?: string; errorMsg?: string; remark?: string }
+export type RefundRecord = { refundNo?: string; refundStatus?: string; refundAmount?: number | string; refundTime?: string; createTime?: string; refundReason?: string; refundChannel?: number | string; errorMsg?: string; remark?: string }
 export type ServerOrder = {
   orderId?: string | number; orderNo: string; productId?: string | number
   productName?: string; productTitle?: string; totalAmount?: number | string; payAmount?: number | string; discountAmount?: number | string
   orderStatus?: string; payStatus?: string; policyStatus?: string; policyNo?: string
   policyEffectiveDate?: string; policyExpiryDate?: string; createTime?: string; payTime?: string
   orderData?: string; fieldData?: string | null; expireTime?: string; refundList?: RefundRecord[]
-  pay?: { payChannel?: string; payChannelName?: string; payAmount?: number; payStatus?: string; payTime?: string }
+  pay?: { paymentNo?: string; transactionId?: string; payChannel?: string; payChannelName?: string; payAmount?: number; payStatus?: string; payTime?: string }
 }
 export type PayChannel = { id: string | number; name?: string; code?: string; status?: string }
 export type PayRequest = { amount: number; subject: string; productId?: string | number; orderId?: string | number; orderNo?: string; orderData?: string; channel: string; method: '4'; shareUser?: string }
@@ -31,8 +31,19 @@ export async function fetchDictionary(type: string): Promise<DictItem[]> {
   return enabled
 }
 export async function loadOrderDictionaries() { await Promise.all(['pay_order_status', 'pay_status'].map(fetchDictionary)) }
+export function orderPaymentFilters() {
+  const value = (labels: string[], fallback?: string) => dictionaries.pay_status?.find(item => labels.includes(item.dictLabel.trim()))?.dictValue || fallback
+  return [
+    { key: 'all', label: '全部', value: '' },
+    { key: 'pending', label: '待支付', value: value(['待支付', '未支付'], 'NOTPAY') },
+    { key: 'success', label: '支付成功', value: value(['支付成功', '已支付', '支付完成', '交易成功'], 'SUCCESS') },
+    { key: 'failed', label: '支付失败', value: value(['支付失败', '交易失败', '失败']) }
+  ]
+}
+export async function loadRefundDictionaries() { await Promise.all(['pay_refund_status', 'pay_refund_reason'].map(fetchDictionary)) }
 const label = (type: string, value?: string) => dictionaries[type]?.find(row => row.dictValue === value)?.dictLabel
 export const refundStatus = (value?: string) => label('pay_refund_status', value) || (value === 'SUCCESS' ? '退款成功' : `退款状态：${value || '未返回'}`)
+export const refundReasonText = (value?: string) => label('pay_refund_reason', value) || '—'
 const orderLabels: Record<string, string> = { NOTPAY: '待支付', PAID: '已支付', CANCELLED: '已取消', CLOSED: '已关闭', REFUNDING: '退款中', REFUNDED: '已退款' }
 export const orderStateText = (order: ServerOrder) => label('pay_order_status', order.orderStatus) || orderLabels[order.orderStatus || ''] || order.orderStatus || '未返回'
 export const payStateText = (order: ServerOrder) => label('pay_status', order.payStatus) || ({ NOTPAY: '未支付', SUCCESS: '支付成功', REFUNDING: '退款中', REFUNDED: '已退款', CLOSED: '已关闭' } as Record<string, string>)[order.payStatus || ''] || order.payStatus || '未返回'
@@ -48,8 +59,8 @@ export async function fetchOrderById(id: string): Promise<ServerOrder> {
   if (!order?.orderNo || String(order.orderId) !== id) throw new Error('订单返回数据异常')
   return order
 }
-export async function fetchOrders(pageNum = 1, orderNo = ''): Promise<{ rows: ServerOrder[]; total: number }> {
-  const result = await apiRequest<{ rows: ServerOrder[]; total: number }>('/order/list', 'GET', { pageNum, pageSize: 20, ...(orderNo.trim() ? { orderNo: orderNo.trim() } : {}) }, 'raw')
+export async function fetchOrders(pageNum = 1, orderNo = '', payStatus = ''): Promise<{ rows: ServerOrder[]; total: number }> {
+  const result = await apiRequest<{ rows: ServerOrder[]; total: number }>('/order/list', 'GET', { pageNum, pageSize: 20, ...(orderNo.trim() ? { orderNo: orderNo.trim() } : {}), ...(payStatus ? { payStatus } : {}) }, 'raw')
   if (!Array.isArray(result.rows) || !Number.isFinite(Number(result.total)) || result.rows.some(order => !order?.orderNo)) throw new Error('订单列表返回数据异常')
   return { rows: result.rows, total: Number(result.total) }
 }

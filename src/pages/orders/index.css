@@ -12,7 +12,7 @@
 .orders-search-field { display: flex; align-items: center; min-width: 0; min-height: 76px; padding-left: 16px; flex: 1; }
 .orders-search-icon { position: relative; width: 26px; height: 26px; margin-right: 22px; flex: 0 0 auto; border: 3px solid #92a8c1; border-radius: 50%; }
 .orders-search-icon::after { position: absolute; right: -9px; bottom: -5px; width: 12px; height: 3px; border-radius: 3px; background: #92a8c1; content: ''; transform: rotate(45deg); }
-.orders-search-input { display: block; width: 0; min-width: 0; height: 76px; flex: 1; color: #253e5b; font-size: 27px; line-height: 76px; }
+.orders-search-input { border: 0; background: transparent; display: block; width: 0; min-width: 0; height: 76px; flex: 1; color: #253e5b; font-size: 27px; line-height: 76px; }
 .orders-search-placeholder { color: #a0afbf; font-size: 27px; }
 .orders-search-clear { display: flex; align-items: center; justify-content: center; width: 56px; height: 72px; margin: 0; padding: 0; flex: 0 0 auto; border: 0; color: #95a5b8; background: transparent; font-size: 36px; line-height: 1; }
 .orders-search-button { display: flex; align-items: center; justify-content: center; width: 136px; height: 76px; margin: 0; padding: 0; flex: 0 0 auto; border: 0; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #5a9ef7, #347fea); font-size: 27px; font-weight: 600; line-height: 1; }
@@ -66,3 +66,9 @@
 .orders-more-button { margin: 0; padding: 16px 28px; border: 0; border-radius: 30px; color: #5593e3; background: #eaf2ff; font-size: 23px; line-height: 1.4; }
 .orders-footer-error { color: #8a9bb0; font-size: 23px; line-height: 1.6; word-break: break-all; }
 .orders-end { color: #acb9c7; font-size: 21px; }
+.order-card-actions { display: flex; min-width: 0; max-width: 70%; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+.orders-tabs { display: flex; align-items: stretch; gap: 8px; margin-top: 24px; border-bottom: 1px solid #e7edf5; }
+.orders-tab { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 88px; margin: 0; padding: 18px 4px; flex: 1; border: 0; border-bottom: 5px solid transparent; border-radius: 0; color: #7d8799; background: transparent; font-size: 27px; line-height: 1.5; }
+.orders-tab-active { border-bottom-color: #38b9ed; color: #252c3b; font-weight: 600; }
+.orders-tab::after { border: 0; }
+.order-status-failed { color: #df5656; background: #fff0f0; }

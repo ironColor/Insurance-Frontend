@@ -1,7 +1,7 @@
 import { Button, Input, Text, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useRef, useState } from 'react'
-import { fetchOrders, loadOrderDictionaries, message, money, ServerOrder } from '../../services/order'
+import { fetchOrders, loadOrderDictionaries, message, money, orderPaymentFilters, ServerOrder } from '../../services/order'
 import { useOrderLifecycle } from '../../hooks/use-order-lifecycle'
 import './index.css'
 
@@ -22,9 +22,11 @@ export default function OrdersPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [failedPage, setFailedPage] = useState(1)
+  const [filter, setFilter] = useState('all')
   const sequence = useRef(0)
   const inFlight = useRef(false)
   const submittedKeyword = useRef('')
+  const submittedPayStatus = useRef('')
   const lifecycle = useOrderLifecycle()
   const load = async (next = 1) => {
     const alive = lifecycle.capture()
@@ -40,7 +42,7 @@ export default function OrdersPage() {
       setPage(1)
     }
     try {
-      const result = await fetchOrders(next, submittedKeyword.current)
+      const result = await fetchOrders(next, submittedKeyword.current, submittedPayStatus.current)
       await loadOrderDictionaries().catch(() => {})
       if (!isActive()) return
       setOrders(previous => next === 1 ? result.rows : [...previous, ...result.rows])
@@ -62,11 +64,24 @@ export default function OrdersPage() {
     if (inFlight.current) return
     setKeyword('')
     submittedKeyword.current = ''
+    submittedPayStatus.current = ''
+    setFilter('all')
     void load()
   }
   const retry = () => { if (!inFlight.current) void load(failedPage) }
   const loadMore = () => { if (!inFlight.current) void load(page + 1) }
   const isSearch = Boolean(submittedKeyword.current)
+  const tabs = orderPaymentFilters()
+  const filterLabel = tabs.find(tab => tab.key === filter)?.label || '全部'
+  const selectFilter = (tab: ReturnType<typeof orderPaymentFilters>[number]) => {
+    if (tab.key === filter) return
+    if (tab.value === undefined) {
+      void Taro.showToast({ title: '支付状态暂不可用，请稍后重试', icon: 'none' }); return
+    }
+    setFilter(tab.key)
+    submittedPayStatus.current = tab.value
+    void load()
+  }
   useDidShow(() => { void load() })
 
   return <View className='orders-page'>
@@ -81,6 +96,10 @@ export default function OrdersPage() {
         {keyword && <Button className='orders-search-clear' ariaLabel='清空订单号' onClick={() => setKeyword('')}>×</Button>}
       </View>
       <Button className='orders-search-button' hoverClass='orders-button-hover' disabled={loading} onClick={search}>{loading ? '查询中' : '查询'}</Button>
+    </View>
+
+    <View className='orders-tabs'>
+      {tabs.map(tab => <Button key={tab.key} className={`orders-tab${filter === tab.key ? ' orders-tab-active' : ''}`} hoverClass='orders-button-hover' onClick={() => selectFilter(tab)}>{tab.label}</Button>)}
     </View>
 
     {!orders.length ? <View className='orders-state'>
@@ -98,14 +117,15 @@ export default function OrdersPage() {
           <View className='orders-document'><View className='orders-document-line' /><View className='orders-document-line' /><View className='orders-document-line orders-document-line-short' /></View>
           <View className='orders-document-badge'><View className='orders-search-icon' /></View>
         </View>
-        <Text className='orders-state-title'>{isSearch ? '未找到相关订单' : '暂无订单'}</Text>
-        <Text className='orders-state-description'>{isSearch ? '请检查订单号是否正确，或查看全部订单' : '投保后，您可以在这里查看订单和支付进度'}</Text>
-        <Button className='orders-state-button' hoverClass='orders-button-hover' onClick={isSearch ? showAll : () => Taro.redirectTo({ url: '/pages/home/index' })}>{isSearch ? '查看全部订单' : '去看看产品'}</Button>
+        <Text className='orders-state-title'>{isSearch ? '未找到相关订单' : filter !== 'all' ? `暂无${filterLabel}订单` : '暂无订单'}</Text>
+        <Text className='orders-state-description'>{isSearch ? '请检查订单号是否正确，或查看全部订单' : filter !== 'all' ? '可以切换分类或查看全部订单' : '投保后，您可以在这里查看订单和支付进度'}</Text>
+        <Button className='orders-state-button' hoverClass='orders-button-hover' onClick={isSearch || filter !== 'all' ? showAll : () => Taro.redirectTo({ url: '/pages/home/index' })}>{isSearch || filter !== 'all' ? '查看全部订单' : '去看看产品'}</Button>
       </>}
     </View> : <View className='orders-list'>
-      <View className='orders-list-heading'><Text>{isSearch ? '查询结果' : '全部订单'}</Text><Text className='orders-list-count'>共 {total} 笔</Text></View>
+      <View className='orders-list-heading'><Text>{isSearch ? '查询结果' : filter === 'all' ? '全部订单' : `${filterLabel}订单`}</Text><Text className='orders-list-count'>共 {total} 笔</Text></View>
       {orders.map(order => {
-        const status = statusLabels[order.orderStatus || ''] || { label: '状态待确认', tone: 'neutral' }
+        const failedPayment = tabs.some(tab => tab.key === 'failed' && tab.value !== undefined && tab.value === order.payStatus)
+        const status = failedPayment ? { label: '支付失败', tone: 'failed' } : statusLabels[order.orderStatus || ''] || { label: '状态待确认', tone: 'neutral' }
         return <View className='order-card' key={order.orderNo}>
           <View className='order-card-head'>
             <View className='order-number'><Text className='order-number-label'>订单号</Text><Text className='order-number-value' selectable>{order.orderNo}</Text></View>
@@ -117,7 +137,12 @@ export default function OrdersPage() {
           </View>
           <View className='order-card-foot'>
             <View className='order-amount'><Text className='order-amount-label'>订单金额</Text><Text className='order-price'>{money(order.totalAmount)}</Text></View>
-            <Button className='order-action' hoverClass='orders-button-hover' onClick={() => Taro.navigateTo({ url: `/pages/order-detail/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>查看详情</Button>
+            <View className='order-card-actions'>
+              {order.orderStatus === 'NOTPAY' && <Button className='order-action' hoverClass='orders-button-hover' onClick={() => Taro.navigateTo({ url: `/pages/payment/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>{failedPayment ? '重新支付' : '继续支付'}</Button>}
+              {order.orderStatus === 'PAID' && <Button className='order-action' hoverClass='orders-button-hover' onClick={() => Taro.navigateTo({ url: `/pages/refund-apply/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>申请退款</Button>}
+              {(order.orderStatus === 'REFUNDING' || order.orderStatus === 'REFUNDED' || !!order.refundList?.length) && <Button className='order-action' hoverClass='orders-button-hover' onClick={() => Taro.navigateTo({ url: `/pages/refund-status/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>退款详情</Button>}
+              <Button className='order-action' hoverClass='orders-button-hover' onClick={() => Taro.navigateTo({ url: `/pages/order-detail/index?orderNo=${encodeURIComponent(order.orderNo)}` })}>查看详情</Button>
+            </View>
           </View>
         </View>
       })}

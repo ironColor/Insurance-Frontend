@@ -216,10 +216,11 @@ function renderOrderPage(path, modules) {
   const render = () => { cursor = 0; return Page() }
   return { render, show: () => didShow() }
 }
+const orderFiltersFixture = () => [{ key: 'all', label: '全部', value: '' }, { key: 'pending', label: '待支付', value: 'NOTPAY' }, { key: 'success', label: '支付成功', value: 'SUCCESS' }, { key: 'failed', label: '支付失败', value: 'TEST_FAILED' }]
 function ordersPageSetup() {
   const calls = []
   return { calls, ...renderOrderPage('src/pages/orders/index.tsx', {
-    '../../services/order': { fetchOrders: (page, keyword) => new Promise((resolve, reject) => calls.push({ page, keyword, resolve, reject })), loadOrderDictionaries: async () => {}, message: e => e.message, money: v => `¥${v}` }
+    '../../services/order': { orderPaymentFilters: orderFiltersFixture, fetchOrders: (page, keyword, payStatus) => new Promise((resolve, reject) => calls.push({ page, keyword, payStatus, resolve, reject })), loadOrderDictionaries: async () => {}, message: e => e.message, money: v => `¥${v}` }
   }) }
 }
 function pageNodes(node) {
@@ -487,17 +488,17 @@ test('退款申请：原因单选与须知确认后才可提交，切换选项�
     '../../services/order-safety': { orderActionBlockReason: () => '', pendingBlockReason: () => '' }
   })
   const buttons = () => pageNodes(page.render()).filter(n => n.type === 'Button')
-  const submit = () => buttons().find(n => pageText(n) === '提交退款申请')
+  const submit = () => buttons().find(n => pageText(n) === '提交退保退款申请')
   page.render(); page.show(); await tick()
   assert.equal(submit().props.disabled, true)
   buttons().find(n => pageText(n) === '不想投了').props.onClick()
   assert.equal(submit().props.disabled, true)
-  buttons().find(n => /我已阅读并确认/.test(pageText(n))).props.onClick()
+  buttons().find(n => /本人已阅读并清楚知晓/.test(pageText(n))).props.onClick()
   assert.equal(submit().props.disabled, false)
   buttons().find(n => pageText(n) === '其他').props.onClick()
   const selected = buttons().filter(n => n.props.className?.includes('refund-choice-selected'))
   assert.equal(selected.length, 1); assert.match(pageText(selected[0]), /其他/)
-  buttons().find(n => /我已阅读并确认/.test(pageText(n))).props.onClick()
+  buttons().find(n => /本人已阅读并清楚知晓/.test(pageText(n))).props.onClick()
   assert.equal(submit().props.disabled, true); assert.equal(submitted, 0)
 })
 test('退款申请：加载时仅显示等待状态，失败后显示重新查询按钮', () => {
@@ -511,4 +512,64 @@ test('退款申请：加载时仅显示等待状态，失败后显示重新查�
   state = { ...state, loading: false, error: '模拟网络错误' }; tree = page.render()
   assert.match(pageText(tree), /订单暂时无法加载.*模拟网络错误/)
   assert.equal(pageNodes(tree).filter(n => n.type === 'Button').length, 1)
+})
+
+test('退款详情：仅退款成功记录显示已完成，处理中和未知状态不误报到账', () => {
+  const service = load('src/services/refund-detail.ts', { './order': {
+    money: value => `¥${Number(value).toFixed(2)}`,
+    refundStatus: value => ({ SUCCESS: '退款成功', '2': '退款成功', '1': '退款中', FAILED: '退款失败' })[value] || `退款状态：${value}`
+  } })
+  for (const refundStatus of ['SUCCESS', '2']) {
+    const result = service.refundPresentation({ refundStatus, refundAmount: '12.34' })
+    assert.equal(result.tone, 'success'); assert.match(result.description, /12\.34/)
+  }
+  for (const refundStatus of ['PROCESSING', '1']) assert.equal(service.refundPresentation({ refundStatus }).tone, 'processing')
+  assert.equal(service.refundPresentation({ refundStatus: 'FAILED' }).tone, 'failed')
+  assert.equal(service.refundPresentation({ refundStatus: 'NEW_STATUS' }).tone, 'neutral')
+  assert.doesNotMatch(service.refundPresentation({ refundStatus: 'NEW_STATUS' }).description, /已完成|已到账/)
+  assert.equal(service.refundPresentation().title, '暂无退款记录')
+})
+
+test('订单列表：按状态保留支付和退款入口，详情页改版后交易流程仍可进入', async () => {
+  const navigations = []
+  const rows = ['NOTPAY', 'PAID', 'REFUNDED', 'UNKNOWN'].map((orderStatus, index) => ({ orderNo: `DEMO${index}`, orderStatus, totalAmount: 160 }))
+  const page = renderOrderPage('src/pages/orders/index.tsx', {
+    '@tarojs/taro': { navigateTo: ({ url }) => { navigations.push(url) } },
+    '../../services/order': { orderPaymentFilters: orderFiltersFixture, fetchOrders: async () => ({ rows, total: rows.length }), loadOrderDictionaries: async () => {}, message: e => e.message, money: value => `¥${value}` }
+  })
+  page.render(); page.show(); await tick()
+  const cards = pageNodes(page.render()).filter(n => n.props.className === 'order-card')
+  const actions = cards.map(card => pageNodes(card).filter(n => n.type === 'Button'))
+  assert.deepEqual(actions.map(items => items.map(pageText)), [['继续支付', '查看详情'], ['申请退款', '查看详情'], ['退款详情', '查看详情'], ['查看详情']])
+  for (const items of actions.slice(0, 3)) items[0].props.onClick()
+  assert.deepEqual(navigations, ['/pages/payment/index?orderNo=DEMO0', '/pages/refund-apply/index?orderNo=DEMO1', '/pages/refund-status/index?orderNo=DEMO2'])
+})
+
+test('订单分类接口：支付状态与订单号共同提交，全部分类不传 payStatus', async () => {
+  const s = setup(); s.response({ statusCode: 200, data: '{"code":200,"rows":[],"total":0}' })
+  await s.order.fetchOrders(2, ' A ', 'TEST_FAILED')
+  assert.equal(s.calls[0].data.payStatus, 'TEST_FAILED'); assert.equal(s.calls[0].data.orderNo, 'A'); assert.equal(s.calls[0].data.pageNum, 2)
+  await s.order.fetchOrders(1)
+  assert.equal(Object.hasOwn(s.calls[1].data, 'payStatus'), false)
+  s.response({ statusCode: 200, data: '{"code":200,"data":[{"dictLabel":"支付失败","dictValue":"CUSTOM_FAILED"}]}' })
+  await s.order.fetchDictionary('pay_status')
+  assert.equal(s.order.orderPaymentFilters().find(tab => tab.key === 'failed').value, 'CUSTOM_FAILED')
+})
+test('订单分类：快速切换丢弃旧响应，搜索与分页保留当前分类', async () => {
+  const s = ordersPageSetup(); s.render(); s.show()
+  const click = label => pageNodes(s.render()).find(n => n.type === 'Button' && pageText(n) === label).props.onClick()
+  click('待支付'); click('支付成功')
+  assert.equal(s.calls[1].payStatus, 'NOTPAY'); assert.equal(s.calls[2].payStatus, 'SUCCESS')
+  s.calls[2].resolve({ rows: [{ orderNo: 'CURRENT' }], total: 21 }); await tick()
+  s.calls[0].resolve({ rows: [{ orderNo: 'OLD-ALL' }], total: 1 }); s.calls[1].resolve({ rows: [{ orderNo: 'OLD-PENDING' }], total: 1 }); await tick()
+  assert.match(pageText(s.render()), /CURRENT/); assert.doesNotMatch(pageText(s.render()), /OLD-ALL|OLD-PENDING/)
+  pageNodes(s.render()).find(n => n.type === 'Input').props.onInput({ detail: { value: ' A ' } })
+  pageNodes(s.render()).find(n => n.type === 'Input').props.onConfirm()
+  assert.equal(s.calls[3].keyword, 'A'); assert.equal(s.calls[3].payStatus, 'SUCCESS'); assert.equal(s.calls[3].page, 1)
+  s.calls[3].resolve({ rows: [{ orderNo: 'A1' }], total: 21 }); await tick()
+  click('加载更多订单'); assert.equal(s.calls[4].page, 2); assert.equal(s.calls[4].keyword, 'A'); assert.equal(s.calls[4].payStatus, 'SUCCESS')
+  s.calls[4].reject(Error('模拟分页失败')); await tick(); click('重新加载')
+  assert.equal(s.calls[5].page, 2); assert.equal(s.calls[5].payStatus, 'SUCCESS')
+  s.calls[5].resolve({ rows: [], total: 1 }); await tick(); click('全部')
+  assert.equal(s.calls[6].page, 1); assert.equal(s.calls[6].payStatus, ''); assert.equal(s.calls[6].keyword, 'A')
 })
