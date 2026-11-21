@@ -86,7 +86,7 @@ export default function OrderConfirmPage() {
           {group.fields.filter((field) => draft.formValues[field.id]).map((field) => (
             <View className='summary-row' key={field.id}>
               <Text>{field.name}</Text>
-              <Text className='summary-value'>{field.type === '身份证' ? `${draft.formValues[field.id].slice(0, 4)}**********${draft.formValues[field.id].slice(-4)}` : field.type === '手机' ? `${draft.formValues[field.id].slice(0, 3)}****${draft.formValues[field.id].slice(-4)}` : draft.formValues[field.id]}</Text>
+              <Text className='summary-value'>{draft.formValues[field.id]}</Text>
             </View>
           ))}
         </View>

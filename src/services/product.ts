@@ -3,7 +3,7 @@ import { ProductUnavailableError, normalizeProductConfig, normalizeProductId, no
 import type { ProductConfig } from './product-types'
 
 export type * from './product-types'
-export { calculatePremium, createDefaultSelections, getSelectedPlan, isProductConfigSnapshot, ProductUnavailableError } from './product-normalize'
+export { insuredFieldType, insuredFieldValue, insuredFieldError, calculatePremium, createDefaultSelections, getSelectedPlan, isProductConfigSnapshot, ProductUnavailableError } from './product-normalize'
 
 export const INSURANCE_DRAFT_KEY = 'insurance-order-draft'
 export const INSURANCE_ORDERS_KEY = 'insurance-orders'

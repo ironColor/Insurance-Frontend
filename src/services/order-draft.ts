@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro'
-import { calculatePremium, getSelectedPlan, isProductConfigSnapshot } from './product-normalize'
+import { insuredFieldError, insuredFieldValue, calculatePremium, getSelectedPlan, isProductConfigSnapshot } from './product-normalize'
 import { INSURANCE_DRAFT_KEY } from './product'
 import type { InsuranceDraft } from './product-types'
 import type { PayRequest } from './order'
@@ -18,8 +18,10 @@ export function newOrderRequest(draft: InsuranceDraft, channel: string): PayRequ
     const fieldConfig: Record<string, string> = Object.create(null)
     for (const field of group.fields) {
       if (!field.fieldName || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(field.fieldName) || Object.prototype.hasOwnProperty.call(fieldConfig, field.fieldName)) throw new Error('投保字段标识缺失或重复，请重新获取产品配置')
-      const value = draft.formValues[field.id] || ''
-      if (field.required && !value.trim()) throw new Error(`请填写${field.name}`)
+      const raw = draft.formValues[field.id] || ''
+      const error = insuredFieldError(field, raw)
+      if (error) throw new Error(error)
+      const value = insuredFieldValue(field, raw)
       if (field.type === '多选' && value) {
         const values = value.split('、')
         if (values.some(item => !Object.prototype.hasOwnProperty.call(field.optionValues || {}, item))) throw new Error(`请重新选择${field.name}`)

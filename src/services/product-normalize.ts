@@ -108,6 +108,31 @@ const fieldTypes: Record<string, InsuredField['type']> = {
   手机: '手机', 手机号: '手机', phone: '手机', mobile: '手机', tel: '手机'
 }
 
+/** text 是输入控件类型，card/phone 是接口独立配置的校验类型；选择项不套用文本校验。 */
+export function insuredFieldType(field: Pick<InsuredField, 'type' | 'validType'>): InsuredField['type'] {
+  if (field.type !== '文本') return field.type
+  const rule = field.validType?.trim().toLowerCase()
+  if (rule === 'card' || rule === 'idcard') return '身份证'
+  if (rule === 'phone' || rule === 'mobile') return '手机'
+  return field.type
+}
+
+export function insuredFieldValue(field: InsuredField, value: string): string {
+  return field.type === '单选' || field.type === '多选' ? value : value.trim()
+}
+
+export function insuredFieldError(field: InsuredField, raw: string): string {
+  const value = insuredFieldValue(field, raw)
+  const type = insuredFieldType(field)
+  if (field.required && !value) return `请${type === '单选' || type === '多选' || type === '日期' ? '选择' : '输入'}${field.name}`
+  if (!value) return ''
+  if (type === '身份证' && !/^\d{17}[\dXx]$/.test(value)) return '请输入18位身份证号码'
+  if (type === '手机' && !/^1\d{10}$/.test(value)) return '请输入11位手机号'
+  if (type === '单选' && !field.options?.includes(value)) return `请重新选择${field.name}`
+  if (type === '多选' && value.split('、').some(item => !field.options?.includes(item))) return `请重新选择${field.name}`
+  return ''
+}
+
 function options(value: unknown): { labels: string[]; values: Record<string, string> } {
   let parsed: unknown = value
   if (typeof value === 'string') {
@@ -136,9 +161,15 @@ function defaultFieldValue(item: ApiRecord, type: InsuredField['type'], optionVa
 }
 
 function fields(value: unknown, groupName: string, issues: string[], used: Set<string>): InsuredField[] {
+  const fieldNames = new Set<string>()
   return list(value, `${groupName}字段`).filter(visible).flatMap((item): InsuredField[] => {
     const label = text(item.fieldLabel || item.fieldName) || '未命名字段'
     const fieldLabel = `“${groupName} / ${label}”`
+    const fieldName = text(item.fieldName)
+    if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(fieldName) || ['__proto__', 'prototype', 'constructor'].includes(fieldName) || fieldNames.has(fieldName)) {
+      issues.push(`${fieldLabel}的字段标识为空、非法或重复，请联系管理员确认配置`)
+    }
+    fieldNames.add(fieldName)
     if (String(item.visible) === '2' || yes(item.isTrigger) || text(item.triggerFields).trim()) {
       issues.push(`${fieldLabel}使用条件显示或字段联动，当前缺少可执行的条件规则，请联系管理员确认配置`)
       return []

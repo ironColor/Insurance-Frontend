@@ -12,3 +12,4 @@ project.private.config.json
 !scripts/test-product.cjs
 !tests/home.test.ts
 !tests/product-intro.test.ts
+!tests/insured-fields.test.ts

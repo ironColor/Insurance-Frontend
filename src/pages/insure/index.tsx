@@ -2,7 +2,7 @@ import { Button, Input, Picker, RichText, ScrollView, Text, View } from '@tarojs
 import Taro, { useDidHide, useDidShow } from '@tarojs/taro'
 import { useEffect, useMemo, useState } from 'react'
 
-import { INSURANCE_DRAFT_KEY, InsuranceDraft, ProductConfig, calculatePremium, getSelectedPlan } from '../../services/product'
+import { INSURANCE_DRAFT_KEY, InsuranceDraft, ProductConfig, insuredFieldType, insuredFieldValue, insuredFieldError, calculatePremium, getSelectedPlan } from '../../services/product'
 
 import { useProductConfig } from '../../hooks/use-product'
 import { buildProductUrl } from '../../services/product-entry'
@@ -90,23 +90,28 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
       return false
     }
     productConfig.fieldGroups.forEach((group) => group.fields.forEach((field) => {
-      const value = (values[field.id] || '').trim()
-      if (field.required && !value) nextErrors[field.id] = `请${field.type === '文本' || field.type === '身份证' || field.type === '手机' ? '输入' : '选择'}${field.name}`
-      else if (field.type === '身份证' && value) {
-        if (!/^\d{17}[\dXx]$/.test(value)) nextErrors[field.id] = '身份证号码格式不正确，请检查后重试'
-      }
-      else if (field.type === '手机' && value && !/^1\d{10}$/.test(value)) nextErrors[field.id] = '联系电话位数不正确，请检查后重试'
-      else if (field.type === '单选' && value && !field.options?.includes(value)) nextErrors[field.id] = `请重新选择${field.name}`
-      else if (field.type === '多选' && value && value.split('、').some((item) => !field.options?.includes(item))) nextErrors[field.id] = `请重新选择${field.name}`
+      const message = insuredFieldError(field, values[field.id] || '')
+      if (message) nextErrors[field.id] = message
     }))
     setErrors(nextErrors)
     const firstMessage = Object.values(nextErrors)[0]
-    if (firstMessage) Taro.showToast({ title: firstMessage, icon: 'none' })
+    if (firstMessage) {
+      void Taro.showToast({ title: '请检查标记的信息', icon: 'none' })
+      let target = ''
+      productConfig.fieldGroups.some((group, groupIndex) => group.fields.some((field, fieldIndex) => {
+        if (!nextErrors[field.id]) return false
+        target = `#insure-field-${groupIndex}-${fieldIndex}`
+        return true
+      }))
+      Taro.nextTick(() => { void Taro.pageScrollTo({ selector: target, offsetTop: -24, duration: 250 }).catch(() => undefined) })
+    }
     return !firstMessage
   }
 
   const openForceRead = () => {
-    const nextDraft = { ...draft, formValues: values }
+    const formValues = Object.fromEntries(productConfig.fieldGroups.flatMap(group => group.fields.map(field => [field.id, insuredFieldValue(field, values[field.id] || '')])))
+    setValues(formValues)
+    const nextDraft = { ...draft, formValues }
     setDraft(nextDraft)
     Taro.setStorageSync(INSURANCE_DRAFT_KEY, nextDraft)
     if (readItems.length === 0) {
@@ -144,16 +149,12 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
     <View className='insure-page'>
       <View className='insure-intro'>请准确填写投保人和被保险人信息。</View>
       {productConfig.formIssues.length > 0 && <View className='insure-config-error'><Text>暂时无法投保</Text><Text>该产品的投保信息暂不可用，请联系客服后重试。</Text></View>}
-      {importantNotices.map((notice) => <View className='read-important-notice' key={notice.id}>
-        <Text className='read-important-title'>{notice.title}</Text>
-        {notice.contentType === 'text' ? notice.content.map((html, index) => <RichText className='read-important-paragraph' key={index} nodes={html} />) : <Button className='ui-secondary-button' hoverClass='ui-button-hover' onClick={() => void openProductDocument(notice).catch(() => undefined)}>查看文件</Button>}
-      </View>)}
-      {productConfig.fieldGroups.map((group) => (
+      {productConfig.fieldGroups.map((group, groupIndex) => (
         <View className='form-section' key={group.id}>
           <Text className='form-section-title'>{group.name}</Text>
-          {group.fields.map((field) => {
+          {group.fields.map((field, fieldIndex) => {
             return (
-              <View className={`form-row-wrap ${errors[field.id] ? 'form-row-error' : ''}`} key={field.id}>
+              <View id={`insure-field-${groupIndex}-${fieldIndex}`} className={`form-row-wrap ${errors[field.id] ? 'form-row-error' : ''}`} key={field.id}>
                 {field.type === '日期' ? (
                   <Picker
                     mode='date'
@@ -192,15 +193,15 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
                     <Input
                       className='form-input'
                       disabled={field.editable === false}
-                      type={field.type === '手机' ? 'number' : 'text'}
-                      maxlength={field.type === '身份证' ? 20 : field.type === '手机' ? 11 : 50}
+                      type={insuredFieldType(field) === '手机' ? 'number' : 'text'}
+                      maxlength={insuredFieldType(field) === '身份证' ? 20 : insuredFieldType(field) === '手机' ? 11 : 50}
                       placeholder={field.placeholder}
                       value={values[field.id] || ''}
                       onInput={(event) => updateValue(field.id, event.detail.value)}
                     />
                   </View>
                 )}
-                {errors[field.id] && <Text className='field-error'>{errors[field.id]}</Text>}
+                {errors[field.id] && <View className='field-error' role='alert'><Text className='field-error-icon'>!</Text><Text className='field-error-copy'>{errors[field.id]}</Text></View>}
               </View>
             )
           })}
@@ -254,11 +255,13 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
         <View className='read-mask'>
           <View className='read-panel'>
             <View className='read-header'>
-              <Text className='read-title'>{currentRead.title}</Text>
-              <Text className='read-step'>{readIndex + 1}/{readItems.length}</Text>
-            </View>
-            <View className='read-tabs'>
-              {readItems.map((item, index) => <Text key={item.id} className={index === readIndex ? 'read-tab-active' : ''}>{item.title}</Text>)}
+              <ScrollView className='read-tabs' scrollX>
+                <View className='read-tabs-track'>
+                  {readItems.map((item, index) => <Text key={item.id} className={`read-tab ${index === readIndex ? 'read-tab-active' : ''}`}>{item.title}</Text>)}
+                </View>
+              </ScrollView>
+              {readRule.mode === 'timer' && remaining > 0 && <Text className='read-countdown'>{remaining}s</Text>}
+              <Button className='read-close' aria-label='关闭阅读弹窗' onClick={() => setReadVisible(false)}>×</Button>
             </View>
             <ScrollView key={currentRead.id} className='read-content' scrollY onScrollToLower={() => setScrolledToEnd(true)} lowerThreshold={12}>
               <View className='read-document-body'>
@@ -271,25 +274,20 @@ function InsureContent({ productConfig, initialDraft }: { productConfig: Product
                     // 文件未打开时保留未阅读状态，辅助方法会显示失败原因。
                   }
                 }}>打开文件阅读</Button>}
-                <View className='read-end'>— 已阅读至底部 —</View>
               </View>
             </ScrollView>
-            {readIndex === 0 && importantNotices.length > 0 && (
-              <View className='read-important-notice'>
-                {importantNotices.map((notice) => (
-                  <View key={notice.id}>
-                    <Text className='read-important-title'>{notice.title}：</Text>
-                    {notice.content.map((paragraph) => <RichText className='read-important-paragraph' key={paragraph} nodes={paragraph} />)}
-                  </View>
-                ))}
-              </View>
-            )}
-            <Text className='read-rule-tip'>
-              {externalScrollRequired ? '暂时无法完成该文件的阅读确认，请联系客服' : currentRead.contentType !== 'text' && !openedDocuments.includes(currentRead.id) ? '请先打开文件阅读' : readRule.mode === 'timer' && remaining > 0 ? `请继续阅读 ${remaining} 秒` : requiresScroll && !scrolledToEnd ? '请下滑完整阅读页面内容' : '已满足阅读条件'}
-            </Text>
+            {importantNotices.length > 0 && <View className='read-important-notice'>
+              {importantNotices.map(notice => <View key={notice.id}>
+                <Text className='read-important-title'>{notice.title}：</Text>
+                {notice.contentType === 'text' ? notice.content.map((paragraph, index) => <RichText className='read-important-paragraph' key={index} nodes={paragraph} />) : <Button className='ui-secondary-button' onClick={() => void openProductDocument(notice).catch(() => undefined)}>查看文件</Button>}
+              </View>)}
+            </View>}
+            <View className='read-footer'>
+            {externalScrollRequired && <Text className='read-rule-tip'>暂时无法完成该文件的阅读确认，请联系客服</Text>}
             <Button className={`read-button ${canCompleteRead ? 'read-button-enabled' : ''}`} disabled={!canCompleteRead} onClick={completeCurrentRead}>
-              我已阅读并同意，{readIndex < readItems.length - 1 ? '下一步' : '确认订单'}
+              {canCompleteRead ? `我已阅读并同意，${readIndex < readItems.length - 1 ? '下一步' : '确认订单'}` : currentRead.contentType !== 'text' && !openedDocuments.includes(currentRead.id) ? '请先打开文件阅读' : readRule.mode === 'timer' && remaining > 0 ? `请阅读并等待 ${remaining} 秒` : '下滑完整阅读页面内容'}
             </Button>
+            </View>
           </View>
         </View>
       )}
